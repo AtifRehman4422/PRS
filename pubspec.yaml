@@ -47,6 +47,11 @@ dependencies:
 
   # Animated Text
   animated_text_kit: ^4.3.0
+  # Image picking (camera + gallery)
+  image_picker: ^1.0.7
+
+  # Firebase
+  firebase_core: ^3.8.1
 
 dev_dependencies:
   flutter_test:
@@ -81,6 +86,12 @@ flutter:
   assets:
     - assets/videos/splash_screen.mp4
     - assets/images/
+    - assets/images/faisalabad.jpg
+    - assets/images/islamabad.jpg
+    - assets/images/karachi.jpg
+    - assets/images/lahore.jpg
+    - assets/images/multan.jpg
+    - assets/images/peshawar.jpg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

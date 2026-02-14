@@ -95,34 +95,35 @@ class _PropertyCardState extends State<PropertyCard> {
       child: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.2)),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
         ),
         child: Icon(icon, color: color, size: 20),
       ),
     );
   }
 
-  Widget _buildFeatureChip(IconData icon, String value) {
+  Widget _buildFeatureChip(BuildContext context, IconData icon, String value) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.2)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: Colors.grey.shade700),
+          Icon(icon, size: 16, color: colorScheme.onSurface.withValues(alpha: 0.7)),
           const SizedBox(width: 6),
           Text(
             value,
             style: TextStyle(
               fontWeight: FontWeight.w600,
               fontSize: 13,
-              color: Colors.grey.shade800,
+              color: colorScheme.onSurface.withValues(alpha: 0.8),
             ),
           ),
         ],
@@ -132,20 +133,21 @@ class _PropertyCardState extends State<PropertyCard> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF1A1F38).withOpacity(0.08),
+          color: const Color(0xFF1A1F38).withValues(alpha: 0.08),
             blurRadius: 20,
             offset: const Offset(0, 8),
             spreadRadius: -2,
           ),
         ],
-        border: Border.all(color: Colors.grey.withOpacity(0.1)),
+      border: Border.all(color: colorScheme.outline.withValues(alpha: 0.15)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -179,11 +181,11 @@ class _PropertyCardState extends State<PropertyCard> {
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) {
                             return Container(
-                              color: Colors.grey[100],
+                              color: colorScheme.surfaceContainerHighest,
                               child: Center(
                                 child: Icon(
                                   Icons.broken_image,
-                                  color: Colors.grey[300],
+                                  color: colorScheme.onSurface.withValues(alpha: 0.4),
                                   size: 40,
                                 ),
                               ),
@@ -212,7 +214,7 @@ class _PropertyCardState extends State<PropertyCard> {
                           decoration: BoxDecoration(
                             color: _currentImageIndex == index
                                 ? Colors.white
-                                : Colors.white.withOpacity(0.5),
+                                : Colors.white.withValues(alpha: 0.5),
                             borderRadius: BorderRadius.circular(3),
                           ),
                         );
@@ -235,10 +237,10 @@ class _PropertyCardState extends State<PropertyCard> {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.white.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: Colors.white.withOpacity(0.3),
+                            color: Colors.white.withValues(alpha: 0.3),
                           ),
                         ),
                         child: Row(
@@ -251,7 +253,7 @@ class _PropertyCardState extends State<PropertyCard> {
                                 shape: BoxShape.circle,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: widget.statusColor.withOpacity(0.4),
+                                  color: widget.statusColor.withValues(alpha: 0.4),
                                     blurRadius: 6,
                                   ),
                                 ],
@@ -289,7 +291,7 @@ class _PropertyCardState extends State<PropertyCard> {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.3),
+                          color: Colors.black.withValues(alpha: 0.3),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: const Row(
@@ -336,10 +338,10 @@ class _PropertyCardState extends State<PropertyCard> {
                             widget.title,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
-                              color: AppColors.textPrimary,
+                              color: colorScheme.onSurface,
                             ),
                           ),
                           const SizedBox(height: 6),
@@ -348,7 +350,7 @@ class _PropertyCardState extends State<PropertyCard> {
                               Icon(
                                 Icons.location_on_outlined,
                                 size: 16,
-                                color: AppColors.textSecondary,
+                                color: colorScheme.onSurface.withValues(alpha: 0.7),
                               ),
                               const SizedBox(width: 4),
                               Expanded(
@@ -356,9 +358,9 @@ class _PropertyCardState extends State<PropertyCard> {
                                   '${widget.location}, ${widget.subLocation}',
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 14,
-                                    color: AppColors.textSecondary,
+                                    color: colorScheme.onSurface.withValues(alpha: 0.7),
                                   ),
                                 ),
                               ),
@@ -379,16 +381,18 @@ class _PropertyCardState extends State<PropertyCard> {
                     child: Row(
                       children: [
                         _buildFeatureChip(
+                          context,
                           Icons.bed_outlined,
                           '${widget.bedrooms} Beds',
                         ),
                         const SizedBox(width: 12),
                         _buildFeatureChip(
+                          context,
                           Icons.bathtub_outlined,
                           '${widget.bathrooms} Baths',
                         ),
                         const SizedBox(width: 12),
-                        _buildFeatureChip(Icons.square_foot, '1200 sqft'),
+                        _buildFeatureChip(context, Icons.square_foot, '1200 sqft'),
                       ],
                     ),
                   ),
@@ -407,11 +411,11 @@ class _PropertyCardState extends State<PropertyCard> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           if (!widget.compact) ...[
-                            const Text(
+                            Text(
                               'Price',
                               style: TextStyle(
                                 fontSize: 12,
-                                color: AppColors.textSecondary,
+                                color: colorScheme.onSurface.withValues(alpha: 0.7),
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -480,7 +484,7 @@ class _PropertyCardState extends State<PropertyCard> {
                                     borderRadius: BorderRadius.circular(12),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: AppColors.primary.withOpacity(0.3),
+                              color: AppColors.primary.withValues(alpha: 0.3),
                                         blurRadius: 8,
                                         offset: const Offset(0, 4),
                                       ),
@@ -537,7 +541,7 @@ class _PropertyCardState extends State<PropertyCard> {
         borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.3),
+            color: color.withValues(alpha: 0.3),
             blurRadius: 6,
             offset: const Offset(0, 3),
           ),

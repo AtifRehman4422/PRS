@@ -48,15 +48,16 @@ class _CategoryListingViewState extends State<CategoryListingView> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new,
-            color: Colors.black,
+            color: colorScheme.onSurface,
             size: 20,
           ),
           onPressed: () => Navigator.pop(context),
@@ -64,8 +65,8 @@ class _CategoryListingViewState extends State<CategoryListingView> {
         centerTitle: true,
         title: Text(
           widget.categoryName,
-          style: const TextStyle(
-            color: Colors.black,
+          style: TextStyle(
+            color: colorScheme.onSurface,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
@@ -152,6 +153,7 @@ class _CategoryListingViewState extends State<CategoryListingView> {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         children: [
           _buildFilterButton(
+            context,
             'Sort',
             Icons.sort,
             () => _showSortBottomSheet(context),
@@ -159,15 +161,17 @@ class _CategoryListingViewState extends State<CategoryListingView> {
           ),
           const SizedBox(width: 10),
           _buildFilterButton(
+            context,
             'City',
             Icons.location_city,
             () => _showCityBottomSheet(context),
             isPrimary: true,
           ),
           const SizedBox(width: 10),
-          _buildFilterButton('Map', Icons.map_outlined, () {}, isPrimary: true),
+          _buildFilterButton(context, 'Map', Icons.map_outlined, () {}, isPrimary: true),
           const SizedBox(width: 10),
           _buildFilterButton(
+            context,
             'Price Range',
             Icons.tune,
             () => _showPriceRangeBottomSheet(context),
@@ -179,24 +183,26 @@ class _CategoryListingViewState extends State<CategoryListingView> {
   }
 
   Widget _buildFilterButton(
+    BuildContext context,
     String text,
     IconData icon,
     VoidCallback onTap, {
     bool isPrimary = false,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(25),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: isPrimary ? AppColors.primary : Colors.white,
+          color: isPrimary ? AppColors.primary : colorScheme.surface,
           borderRadius: BorderRadius.circular(25),
-          border: isPrimary ? null : Border.all(color: Colors.grey.shade300),
+          border: isPrimary ? null : Border.all(color: colorScheme.outline.withValues(alpha: 0.3)),
           boxShadow: [
             if (!isPrimary)
               BoxShadow(
-                color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withValues(alpha: 0.1),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
               ),
@@ -206,14 +212,14 @@ class _CategoryListingViewState extends State<CategoryListingView> {
           children: [
             Icon(
               icon,
-              color: isPrimary ? Colors.white : Colors.black87,
+              color: isPrimary ? Colors.white : colorScheme.onSurface,
               size: 18,
             ),
             const SizedBox(width: 8),
             Text(
               text,
               style: TextStyle(
-                color: isPrimary ? Colors.white : Colors.black87,
+                color: isPrimary ? Colors.white : colorScheme.onSurface,
                 fontWeight: FontWeight.w600,
                 fontSize: 14,
               ),
@@ -225,14 +231,15 @@ class _CategoryListingViewState extends State<CategoryListingView> {
   }
 
   void _showSortBottomSheet(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) {
         return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           ),
           padding: const EdgeInsets.all(24),
           child: Column(
@@ -244,21 +251,22 @@ class _CategoryListingViewState extends State<CategoryListingView> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
+                    color: colorScheme.outline.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
               const SizedBox(height: 20),
-              const Text(
+              Text(
                 'Sort By',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: colorScheme.onSurface),
               ),
               const SizedBox(height: 20),
-              _buildSortOption(Icons.local_fire_department, 'Popular', true),
-              _buildSortOption(Icons.new_releases, 'Newest', false),
-              _buildSortOption(Icons.arrow_upward, 'Price: Low to High', false),
+              _buildSortOption(context, Icons.local_fire_department, 'Popular', true),
+              _buildSortOption(context, Icons.new_releases, 'Newest', false),
+              _buildSortOption(context, Icons.arrow_upward, 'Price: Low to High', false),
               _buildSortOption(
+                context,
                 Icons.arrow_downward,
                 'Price: High to Low',
                 false,
@@ -270,20 +278,21 @@ class _CategoryListingViewState extends State<CategoryListingView> {
     );
   }
 
-  Widget _buildSortOption(IconData icon, String text, bool isSelected) {
+  Widget _buildSortOption(BuildContext context, IconData icon, String text, bool isSelected) {
+    final colorScheme = Theme.of(context).colorScheme;
     return ListTile(
       contentPadding: EdgeInsets.zero,
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.primary.withOpacity(0.1)
-              : Colors.grey.shade100,
+              ? AppColors.primary.withValues(alpha: 0.1)
+              : colorScheme.surfaceContainerHighest,
           shape: BoxShape.circle,
         ),
         child: Icon(
           icon,
-          color: isSelected ? AppColors.primary : Colors.grey,
+          color: isSelected ? AppColors.primary : colorScheme.onSurface.withValues(alpha: 0.6),
           size: 20,
         ),
       ),
@@ -291,7 +300,7 @@ class _CategoryListingViewState extends State<CategoryListingView> {
         text,
         style: TextStyle(
           fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-          color: isSelected ? AppColors.primary : Colors.black87,
+          color: isSelected ? AppColors.primary : colorScheme.onSurface,
         ),
       ),
       trailing: isSelected
@@ -312,10 +321,11 @@ class _CategoryListingViewState extends State<CategoryListingView> {
           minChildSize: 0.5,
           maxChildSize: 0.95,
           builder: (_, controller) {
+            final colorScheme = Theme.of(context).colorScheme;
             return Container(
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              decoration: BoxDecoration(
+                color: colorScheme.surface,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
               ),
               padding: const EdgeInsets.all(24),
               child: Column(
@@ -326,15 +336,15 @@ class _CategoryListingViewState extends State<CategoryListingView> {
                       width: 40,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: Colors.grey.shade300,
+                        color: colorScheme.outline.withValues(alpha: 0.3),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Text(
+                  Text(
                     'Select City',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: colorScheme.onSurface),
                   ),
                   const SizedBox(height: 16),
                   // Premium Search Bar
@@ -422,7 +432,7 @@ class _CategoryListingViewState extends State<CategoryListingView> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.08),
+              color: AppColors.primary.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Icon(icon, color: AppColors.primary, size: 32),
@@ -541,7 +551,7 @@ class _CategoryListingViewState extends State<CategoryListingView> {
                         borderRadius: BorderRadius.circular(27),
                       ),
                       elevation: 4,
-                      shadowColor: AppColors.primary.withOpacity(0.4),
+                      shadowColor: AppColors.primary.withValues(alpha: 0.4),
                     ),
                     child: const Text(
                       'Apply Filter',

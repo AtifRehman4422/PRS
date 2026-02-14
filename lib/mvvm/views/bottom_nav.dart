@@ -36,29 +36,52 @@ class _BottomNavState extends State<BottomNav> {
 
   @override
   Widget build(BuildContext context) {
+    final surfaceColor = Theme.of(context).colorScheme.surface;
     return Scaffold(
       body: _pages[_page],
       bottomNavigationBar: CurvedNavigationBar(
         index: _page,
-        height: 60,
+        height: 70,
         backgroundColor: Colors.transparent,
         color: AppColors.primary,
+        buttonBackgroundColor: surfaceColor,
         animationDuration: const Duration(milliseconds: 300),
-        items: const [
+        items: [
           CurvedNavigationBarItem(
-            child: Icon(Icons.home, color: Colors.white),
+            child: Icon(
+              Icons.home,
+              color: _page == 0 ? AppColors.primary : surfaceColor,
+              size: 28,
+            ),
             label: 'Home',
-            labelStyle: TextStyle(color: Colors.white),
+            labelStyle: TextStyle(
+              color: _page == 0 ? AppColors.primary : surfaceColor,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           CurvedNavigationBarItem(
-            child: Icon(Icons.add, color: Colors.white),
+            child: Icon(
+              Icons.add,
+              color: _page == 1 ? AppColors.primary : surfaceColor,
+              size: 28,
+            ),
             label: 'Add',
-            labelStyle: TextStyle(color: Colors.white),
+            labelStyle: TextStyle(
+              color: _page == 1 ? AppColors.primary : surfaceColor,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           CurvedNavigationBarItem(
-            child: Icon(Icons.person, color: Colors.white),
+            child: Icon(
+              Icons.person,
+              color: _page == 2 ? AppColors.primary : surfaceColor,
+              size: 28,
+            ),
             label: 'Profile',
-            labelStyle: TextStyle(color: Colors.white),
+            labelStyle: TextStyle(
+              color: _page == 2 ? AppColors.primary : surfaceColor,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ],
         onTap: (index) {

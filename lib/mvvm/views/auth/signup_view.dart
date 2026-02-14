@@ -46,18 +46,19 @@ class _SignupViewState extends State<SignupView> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
       height: size.height * 0.92,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(32),
           topRight: Radius.circular(32),
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.2),
+            color: AppColors.primary.withValues(alpha: 0.2),
             blurRadius: 25,
             spreadRadius: 5,
             offset: const Offset(0, -8),
@@ -85,7 +86,7 @@ class _SignupViewState extends State<SignupView> {
                     height: 100,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.white.withOpacity(0.1),
+                      color: Colors.white.withValues(alpha: 0.1),
                     ),
                   ),
                 ),
@@ -97,7 +98,7 @@ class _SignupViewState extends State<SignupView> {
                     height: 80,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.white.withOpacity(0.08),
+                      color: Colors.white.withValues(alpha: 0.08),
                     ),
                   ),
                 ),
@@ -110,7 +111,7 @@ class _SignupViewState extends State<SignupView> {
                         width: 50,
                         height: 5,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.5),
+                          color: Colors.white.withValues(alpha: 0.5),
                           borderRadius: BorderRadius.circular(3),
                         ),
                       ),
@@ -130,14 +131,14 @@ class _SignupViewState extends State<SignupView> {
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.2),
+                                    color: Colors.black.withValues(alpha: 0.2),
                                     blurRadius: 15,
                                   ),
                                 ],
                               ),
                               child: CircleAvatar(
                                 radius: 45,
-                                backgroundColor: Colors.white,
+                                backgroundColor: colorScheme.surface,
                                 child: _gradientIcon(
                                   Icons.person_outline,
                                   size: 45,
@@ -160,7 +161,7 @@ class _SignupViewState extends State<SignupView> {
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withOpacity(0.2),
+                                      color: Colors.black.withValues(alpha: 0.2),
                                       blurRadius: 8,
                                     ),
                                   ],
@@ -208,6 +209,7 @@ class _SignupViewState extends State<SignupView> {
                     FadeInSlide(
                       delay: 0.2,
                       child: _buildInputField(
+                        context,
                         controller: _nameController,
                         hint: 'Username',
                         icon: Icons.person_outline,
@@ -223,6 +225,7 @@ class _SignupViewState extends State<SignupView> {
                     FadeInSlide(
                       delay: 0.3,
                       child: _buildInputField(
+                        context,
                         controller: _emailController,
                         hint: 'Email',
                         icon: Icons.mail_outline,
@@ -240,9 +243,9 @@ class _SignupViewState extends State<SignupView> {
                       delay: 0.4,
                       child: Container(
                         decoration: BoxDecoration(
-                          color: Colors.grey.shade50,
+                          color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.grey.shade200),
+                          border: Border.all(color: colorScheme.outline.withValues(alpha: 0.3)),
                         ),
                         child: Row(
                           children: [
@@ -267,7 +270,7 @@ class _SignupViewState extends State<SignupView> {
                                   Text(
                                     '+92',
                                     style: TextStyle(
-                                      color: Colors.grey.shade700,
+                                      color: colorScheme.onSurface.withValues(alpha: 0.7),
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
@@ -277,7 +280,7 @@ class _SignupViewState extends State<SignupView> {
                             Container(
                               width: 1,
                               height: 30,
-                              color: Colors.grey.shade300,
+                              color: colorScheme.outline.withValues(alpha: 0.3),
                             ),
                             Expanded(
                               child: TextFormField(
@@ -287,7 +290,7 @@ class _SignupViewState extends State<SignupView> {
                                 decoration: InputDecoration(
                                   hintText: 'Phone Number',
                                   hintStyle: TextStyle(
-                                    color: AppColors.hintText,
+                                    color: colorScheme.onSurface.withValues(alpha: 0.5),
                                   ),
                                   counterText: '',
                                   border: InputBorder.none,
@@ -302,7 +305,7 @@ class _SignupViewState extends State<SignupView> {
                               child: Text(
                                 '0/10',
                                 style: TextStyle(
-                                  color: AppColors.hintText,
+                                  color: colorScheme.onSurface.withValues(alpha: 0.5),
                                   fontSize: 12,
                                 ),
                               ),
@@ -317,6 +320,7 @@ class _SignupViewState extends State<SignupView> {
                     FadeInSlide(
                       delay: 0.5,
                       child: _buildInputField(
+                        context,
                         controller: _passwordController,
                         hint: 'Password',
                         icon: Icons.lock_outline,
@@ -360,7 +364,7 @@ class _SignupViewState extends State<SignupView> {
                               borderRadius: BorderRadius.circular(32),
                             ),
                             elevation: 4,
-                            shadowColor: AppColors.primary.withOpacity(0.4),
+                            shadowColor: AppColors.primary.withValues(alpha: 0.4),
                           ),
                           child: const Text(
                             'Sign Up',
@@ -382,7 +386,7 @@ class _SignupViewState extends State<SignupView> {
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.grey.shade500,
+                          color: colorScheme.onSurface.withValues(alpha: 0.6),
                           height: 1.5,
                         ),
                       ),
@@ -397,7 +401,7 @@ class _SignupViewState extends State<SignupView> {
                         children: [
                           Text(
                             'Already have an account?',
-                            style: TextStyle(color: Colors.grey.shade600),
+                            style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.7)),
                           ),
                           TextButton(
                             onPressed: () {
@@ -431,7 +435,8 @@ class _SignupViewState extends State<SignupView> {
     );
   }
 
-  Widget _buildInputField({
+  Widget _buildInputField(
+    BuildContext context, {
     required TextEditingController controller,
     required String hint,
     required IconData icon,
@@ -442,11 +447,12 @@ class _SignupViewState extends State<SignupView> {
     Widget? suffixIcon,
     String? Function(String?)? validator,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.3)),
       ),
       child: TextFormField(
         controller: controller,
@@ -454,7 +460,7 @@ class _SignupViewState extends State<SignupView> {
         obscureText: obscureText,
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: TextStyle(color: AppColors.hintText),
+          hintStyle: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.5)),
           prefixIcon: Padding(
             padding: const EdgeInsets.all(12),
             child: _gradientIcon(icon, color1: iconColor1, color2: iconColor2),

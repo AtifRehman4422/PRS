@@ -1,30 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:propertyrent/mvvm/views/home/category_listing_view.dart';
-import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:propertyrent/core/constants/app_images.dart';
 import 'package:propertyrent/core/app_color/app_colors.dart';
 import 'package:propertyrent/core/animations/fade_in_slide.dart';
+import 'package:propertyrent/mvvm/views/home/search_city_view.dart';
+import 'package:animated_text_kit/animated_text_kit.dart';
 
-class HomeView extends StatelessWidget {
+class HomeView extends StatefulWidget {
   final VoidCallback? onProfileTap;
 
   const HomeView({super.key, this.onProfileTap});
 
-  Widget _gradientIcon(
-    IconData icon, {
-    Color color1 = Colors.red,
-    Color color2 = Colors.black,
-    double size = 24,
-  }) {
-    return ShaderMask(
-      shaderCallback: (bounds) => LinearGradient(
-        colors: [color1, color2],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ).createShader(bounds),
-      child: Icon(icon, color: Colors.white, size: size),
-    );
-  }
+  @override
+  State<HomeView> createState() => _HomeViewState();
+}
+
+class _HomeViewState extends State<HomeView> {
+  String _selectedCityName = 'Islamabad';
+  String _selectedCityImage = AppImages.islamabad;
 
   @override
   Widget build(BuildContext context) {
@@ -32,12 +25,12 @@ class HomeView extends StatelessWidget {
     final isSmallHeight = size.height < 700;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _buildHeader(context, size, onProfileTap),
+            _buildHeader(context, size, widget.onProfileTap),
             SizedBox(height: isSmallHeight ? 12 : 16),
             _buildTitle(size),
             SizedBox(height: isSmallHeight ? 12 : 16),
@@ -55,7 +48,7 @@ class HomeView extends StatelessWidget {
     Size size,
     VoidCallback? onProfileTap,
   ) {
-    final headerHeight = size.height * 0.26;
+    final headerHeight = size.height * 0.28;
     final searchHeight = size.height * 0.06;
 
     return Container(
@@ -69,36 +62,12 @@ class HomeView extends StatelessWidget {
             child: ClipPath(
               clipper: _HomeHeaderClipper(),
               child: Opacity(
-                opacity: 0.15,
+                opacity: 0.40,
                 child: Image.asset(AppImages.home, fit: BoxFit.cover),
               ),
             ),
           ),
-          // Decorative circles
-          Positioned(
-            right: -30,
-            top: -30,
-            child: Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.1),
-              ),
-            ),
-          ),
-          Positioned(
-            left: -20,
-            bottom: 20,
-            child: Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.08),
-              ),
-            ),
-          ),
+          // Decorative circles removed as requested
           // Content
           Padding(
             padding: EdgeInsets.fromLTRB(16, 16, 16, size.height * 0.04),
@@ -110,23 +79,33 @@ class HomeView extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Welcome text
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      // Logo and Brand
+                      Row(
                         children: [
-                          Text(
-                            'Welcome',
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.9),
-                              fontSize: 14,
-                            ),
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            // decoration: BoxDecoration(
+                            //   color: const Color.fromARGB(255, 57, 24, 24),
+                            //   borderRadius: BorderRadius.circular(12),
+                            // ),
+                            child: Image.asset(AppImages.logo, height: 40 , color: Colors.white,),
                           ),
-                          const Text(
-                            'Find Your Place',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
+                          const SizedBox(width: 4),
+                          SizedBox(
+                            width: 150,
+                            child: AnimatedTextKit(
+                              animatedTexts: [
+                                WavyAnimatedText(
+                                  'PropertyRent',
+                                  textStyle: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    // letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ],
+                              repeatForever: true,
                             ),
                           ),
                         ],
@@ -137,32 +116,40 @@ class HomeView extends StatelessWidget {
                         child: Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 16,
-                            vertical: 8,
+                            vertical: 10,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(25),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.3),
-                            ),
+                            color: const Color(
+                              0xFFFF5252,
+                            ), // Red shade from screenshot
+                            borderRadius: BorderRadius.circular(30),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.1),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
                           ),
-                          child: Row(
+                          child: const Row(
                             children: [
-                              const Text(
+                              Text(
                                 'Login',
                                 style: TextStyle(
                                   color: Colors.white,
-                                  fontWeight: FontWeight.w600,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
                                 ),
                               ),
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: const BoxDecoration(
-                                  color: Colors.white,
-                                  shape: BoxShape.circle,
+                              SizedBox(width: 10),
+                              CircleAvatar(
+                                radius: 14,
+                                backgroundColor: Colors.white,
+                                child: Icon(
+                                  Icons.person,
+                                  color: Color(0xFFFF5252),
+                                  size: 18,
                                 ),
-                                child: _gradientIcon(Icons.person, size: 18),
                               ),
                             ],
                           ),
@@ -176,60 +163,134 @@ class HomeView extends StatelessWidget {
                 FadeInSlide(
                   delay: 0.1,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
                     decoration: BoxDecoration(
-                      color: AppColors.surface,
+                      color: Theme.of(context).colorScheme.surface,
                       borderRadius: BorderRadius.circular(32),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.15),
+                          color: Colors.black.withValues(alpha: 0.15),
                           blurRadius: 15,
                           offset: const Offset(0, 5),
                         ),
                       ],
                     ),
-                    height: searchHeight.clamp(48, 58),
+                    height: searchHeight.clamp(52, 62),
                     child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
                       children: [
-                        _gradientIcon(
-                          Icons.location_on,
-                          color1: AppColors.primary,
-                          color2: Colors.red.shade300,
-                          size: 22,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            'Islamabad',
-                            style: TextStyle(
-                              color: AppColors.textPrimary,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 500),
+                          transitionBuilder: (child, animation) =>
+                              FadeTransition(
+                                opacity: animation,
+                                child: ScaleTransition(
+                                  scale: animation,
+                                  child: child,
+                                ),
+                              ),
+                          child: Container(
+                            key: ValueKey(_selectedCityImage),
+                            width: 38,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: AppColors.primary.withValues(alpha: 0.1),
+                                width: 2,
+                              ),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: _selectedCityImage.isNotEmpty
+                                  ? Image.asset(
+                                      _selectedCityImage,
+                                      fit: BoxFit.cover,
+                                    )
+                                  : Container(
+                                      color: AppColors.primary.withValues(
+                                        alpha: 0.1,
+                                      ),
+                                      child: const Icon(
+                                        Icons.location_city,
+                                        color: AppColors.primary,
+                                        size: 18,
+                                      ),
+                                    ),
                             ),
                           ),
                         ),
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                AppColors.primary,
-                                AppColors.primary.withOpacity(0.8),
-                              ],
-                            ),
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.primary.withOpacity(0.3),
-                                blurRadius: 8,
-                                offset: const Offset(0, 3),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: AnimatedTextKit(
+                            animatedTexts: [
+                              TyperAnimatedText(
+                                _selectedCityName,
+                                textStyle: TextStyle(
+                                  color: Theme.of(context).colorScheme.onSurface,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                speed: const Duration(milliseconds: 100),
+                              ),
+                              TyperAnimatedText(
+                                'Search for Houses...',
+                                textStyle: TextStyle(
+                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              TyperAnimatedText(
+                                'Find a Flat...',
+                                textStyle: TextStyle(
+                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              TyperAnimatedText(
+                                'Marquee & More...',
+                                textStyle: TextStyle(
+                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
                             ],
+                            repeatForever: true,
+                            pause: const Duration(seconds: 2),
                           ),
-                          child: const Icon(
-                            Icons.search,
-                            color: Colors.white,
-                            size: 20,
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            showModalBottomSheet(
+                              context: context,
+                              isScrollControlled: true,
+                              backgroundColor: Colors.transparent,
+                              builder: (context) => SearchCityView(
+                                selectedCityName: _selectedCityName,
+                                onCitySelected: (name, image) {
+                                  setState(() {
+                                    _selectedCityName = name;
+                                    _selectedCityImage = image;
+                                  });
+                                },
+                              ),
+                            );
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.all(6),
+                            padding: const EdgeInsets.all(10),
+                            decoration: const BoxDecoration(
+                              color: AppColors.primary,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.search,
+                              color: Colors.white,
+                              size: 20,
+                            ),
                           ),
                         ),
                       ],
@@ -245,81 +306,38 @@ class HomeView extends StatelessWidget {
   }
 
   Widget _buildTitle(Size size) {
-    final logoHeight = size.height * 0.07;
-    final titleFontSize = size.width * 0.06;
-
-    return FadeInSlide(
-      delay: 0.2,
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primary.withOpacity(0.25),
-                  blurRadius: 20,
-                  spreadRadius: 2,
-                ),
-              ],
-              border: Border.all(
-                color: AppColors.primary.withOpacity(0.1),
-                width: 3,
-              ),
-            ),
-            child: Image.asset(
-              AppImages.logo,
-              height: logoHeight.clamp(40, 60),
-            ),
-          ),
-          const SizedBox(height: 14),
-          AnimatedTextKit(
-            animatedTexts: [
-              WavyAnimatedText(
-                'PropertyRent',
-                textStyle: TextStyle(
-                  fontSize: titleFontSize.clamp(22, 30),
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                  letterSpacing: 1.2,
-                ),
-                speed: const Duration(milliseconds: 200),
-              ),
-            ],
-            totalRepeatCount: 1,
-          ),
-        ],
-      ),
-    );
+    return const SizedBox.shrink();
   }
 
   Widget _buildCategoryGrid(Size size) {
     final items = [
       _CategoryItem(title: 'Hostel', imagePath: AppImages.hostel),
-      _CategoryItem(title: 'House', imagePath: AppImages.house),
       _CategoryItem(title: 'Flat', imagePath: AppImages.flat),
       _CategoryItem(title: 'Office', imagePath: AppImages.office),
       _CategoryItem(title: 'Shop', imagePath: AppImages.shop),
+      _CategoryItem(title: 'Marquee', imagePath: AppImages.img1),
+      _CategoryItem(title: 'Farmhouse', imagePath: AppImages.img2),
+      _CategoryItem(title: 'House', imagePath: AppImages.house),
+      _CategoryItem(title: 'Guest House', imagePath: AppImages.house),
     ];
 
     final crossAxisCount = size.width < 360 ? 1 : 2;
-    final aspectRatio = size.height < 700 ? 1.0 : 0.9;
+    // Increased aspect ratio to fit the button below the card
+    final aspectRatio = size.height < 700 ? 0.78 : 0.75;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.symmetric(horizontal: 24),
           child: GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: items.length,
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: crossAxisCount,
-              mainAxisSpacing: 20,
-              crossAxisSpacing: 20,
+              mainAxisSpacing: 30,
+              crossAxisSpacing: 24,
               childAspectRatio: aspectRatio,
             ),
             itemBuilder: (context, index) {
@@ -363,76 +381,117 @@ class _CategoryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppColors.surface, AppColors.surface.withOpacity(0.95)],
-        ),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withOpacity(0.12),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-        border: Border.all(
-          color: AppColors.primary.withOpacity(0.08),
-          width: 1,
-        ),
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Flexible(
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    AppColors.primary.withOpacity(0.08),
-                    AppColors.primary.withOpacity(0.04),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Image.asset(item.imagePath, fit: BoxFit.contain),
-            ),
-          ),
-          const SizedBox(height: 14),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+    final colorScheme = Theme.of(context).colorScheme;
+    return Column(
+      children: [
+        // The Card (Image/Icon)
+        Expanded(
+          child: Container(
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(20),
-              border: Border(
-                bottom: BorderSide(color: AppColors.primary, width: 3),
-              ),
+              color: colorScheme.surface,
+              borderRadius: BorderRadius.circular(35),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 15,
+                  offset: const Offset(0, 10),
+                ),
+              ],
             ),
-            child: Text(
-              item.title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
-                letterSpacing: 0.5,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(35),
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: item.title == 'Shop'
+                        ? Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  colorScheme.surface,
+                                  AppColors.primary.withValues(alpha: 0.05),
+                                ],
+                              ),
+                            ),
+                            child: Center(
+                              child: Icon(
+                                Icons.storefront_rounded,
+                                size: 70,
+                                color: colorScheme.onSurface,
+                              ),
+                            ),
+                          )
+                        : Theme.of(context).brightness == Brightness.dark
+                            ? ColorFiltered(
+                                colorFilter: const ColorFilter.mode(
+                                  Colors.white,
+                                  BlendMode.srcIn,
+                                ),
+                                child: Image.asset(item.imagePath, fit: BoxFit.cover),
+                              )
+                            : Image.asset(item.imagePath, fit: BoxFit.cover),
+                  ),
+                  // Gradient overlay (Red Shade at bottom)
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            Colors.transparent,
+                            AppColors.primary.withValues(alpha: 0.15),
+                            AppColors.primary.withValues(alpha: 0.35),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 14),
+        // The Red Button below the card
+        Container(
+          height: 48,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: AppColors.primary,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.3),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                item.title,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Icon(
+                Icons.arrow_forward_rounded,
+                color: Colors.white,
+                size: 20,
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -442,18 +501,25 @@ class _HomeHeaderPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = AppColors.primary
+      ..shader = const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Color(0xFFE30707), // Vibrant red
+          Color(0xFFFF5722), // Vibrant orange/coral
+        ],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))
       ..style = PaintingStyle.fill;
 
     final path = Path();
     path.moveTo(0, 0);
     path.lineTo(size.width, 0);
-    path.lineTo(size.width, size.height * 0.75);
+    path.lineTo(size.width, size.height * 0.78);
     path.quadraticBezierTo(
-      size.width * 0.5,
+      size.width * 0.6,
       size.height * 1.15,
       0,
-      size.height * 0.85,
+      size.height * 0.84,
     );
     path.close();
 
@@ -471,12 +537,12 @@ class _HomeHeaderClipper extends CustomClipper<Path> {
     final path = Path();
     path.moveTo(0, 0);
     path.lineTo(size.width, 0);
-    path.lineTo(size.width, size.height * 0.75);
+    path.lineTo(size.width, size.height * 0.78);
     path.quadraticBezierTo(
       size.width * 0.5,
-      size.height * 1.15,
+      size.height * 1.10,
       0,
-      size.height * 0.85,
+      size.height * 0.83,
     );
     path.close();
     return path;

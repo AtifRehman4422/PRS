@@ -44,18 +44,19 @@ class _LoginViewState extends State<LoginView> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
       height: size.height * 0.88,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(32),
           topRight: Radius.circular(32),
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.2),
+            color: AppColors.primary.withValues(alpha: 0.2),
             blurRadius: 25,
             spreadRadius: 5,
             offset: const Offset(0, -8),
@@ -82,7 +83,7 @@ class _LoginViewState extends State<LoginView> {
                     height: 100,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.white.withOpacity(0.1),
+                      color: Colors.white.withValues(alpha: 0.1),
                     ),
                   ),
                 ),
@@ -95,7 +96,7 @@ class _LoginViewState extends State<LoginView> {
                         width: 50,
                         height: 5,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.5),
+                        color: Colors.white.withValues(alpha: 0.5),
                           borderRadius: BorderRadius.circular(3),
                         ),
                       ),
@@ -103,11 +104,11 @@ class _LoginViewState extends State<LoginView> {
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: colorScheme.surface,
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
+                              color: Colors.black.withValues(alpha: 0.1),
                               blurRadius: 10,
                             ),
                           ],
@@ -131,14 +132,14 @@ class _LoginViewState extends State<LoginView> {
                   children: [
                     const SizedBox(height: 16),
                     // Title
-                    const FadeInSlide(
+                    FadeInSlide(
                       delay: 0.0,
                       child: Text(
                         'Welcome Back!',
                         style: TextStyle(
                           fontSize: 26,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
+                          color: colorScheme.onSurface,
                         ),
                       ),
                     ),
@@ -149,7 +150,7 @@ class _LoginViewState extends State<LoginView> {
                         'Login to continue',
                         style: TextStyle(
                           fontSize: 14,
-                          color: AppColors.textSecondary,
+                          color: colorScheme.onSurface.withValues(alpha: 0.7),
                         ),
                       ),
                     ),
@@ -159,6 +160,7 @@ class _LoginViewState extends State<LoginView> {
                     FadeInSlide(
                       delay: 0.2,
                       child: _buildInputField(
+                        context,
                         controller: _emailController,
                         hint: 'Enter Email',
                         icon: Icons.mail_outline,
@@ -175,6 +177,7 @@ class _LoginViewState extends State<LoginView> {
                     FadeInSlide(
                       delay: 0.3,
                       child: _buildInputField(
+                        context,
                         controller: _passwordController,
                         hint: 'Enter Password',
                         icon: Icons.lock_outline,
@@ -245,7 +248,7 @@ class _LoginViewState extends State<LoginView> {
                               borderRadius: BorderRadius.circular(32),
                             ),
                             elevation: 4,
-                            shadowColor: AppColors.primary.withOpacity(0.4),
+                            shadowColor: AppColors.primary.withValues(alpha: 0.4),
                           ),
                           child: const Text(
                             'Login',
@@ -343,12 +346,12 @@ class _LoginViewState extends State<LoginView> {
                                 ),
                               ),
                               const SizedBox(width: 10),
-                              const Text(
+                              Text(
                                 'Google',
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.textPrimary,
+                                  color: colorScheme.onSurface,
                                 ),
                               ),
                             ],
@@ -400,7 +403,8 @@ class _LoginViewState extends State<LoginView> {
     );
   }
 
-  Widget _buildInputField({
+  Widget _buildInputField(
+    BuildContext context, {
     required TextEditingController controller,
     required String hint,
     required IconData icon,
@@ -411,11 +415,12 @@ class _LoginViewState extends State<LoginView> {
     Widget? suffixIcon,
     String? Function(String?)? validator,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.3)),
       ),
       child: TextFormField(
         controller: controller,
@@ -423,7 +428,7 @@ class _LoginViewState extends State<LoginView> {
         obscureText: obscureText,
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: TextStyle(color: AppColors.hintText),
+          hintStyle: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.5)),
           prefixIcon: Padding(
             padding: const EdgeInsets.all(12),
             child: _gradientIcon(icon, color1: iconColor1, color2: iconColor2),

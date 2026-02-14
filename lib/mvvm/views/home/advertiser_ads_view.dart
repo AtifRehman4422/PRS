@@ -17,6 +17,9 @@ class AdvertiserAdsView extends StatelessWidget {
       {'label': 'Flat', 'icon': AppImages.flat},
       {'label': 'Office', 'icon': AppImages.office},
       {'label': 'Shop', 'icon': AppImages.shop},
+      {'label': 'Marquee', 'icon': AppImages.img1},
+      {'label': 'Guest House', 'icon': AppImages.house},
+      {'label': 'Farm House', 'icon': AppImages.img2},
     ];
 
     final ads = List.generate(4, (i) {
@@ -33,18 +36,19 @@ class AdvertiserAdsView extends StatelessWidget {
       };
     });
 
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: colorScheme.surface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black),
+          icon: Icon(Icons.arrow_back_ios_new, color: colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           advertiserName,
-          style: const TextStyle(
-            color: AppColors.textPrimary,
+          style: TextStyle(
+            color: colorScheme.onSurface,
             fontWeight: FontWeight.bold,
           ),
         ),

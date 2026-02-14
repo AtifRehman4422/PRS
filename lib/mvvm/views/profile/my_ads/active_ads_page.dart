@@ -14,6 +14,9 @@ class ActiveAdsPage extends StatelessWidget {
       {'label': 'Flat', 'icon': AppImages.flat},
       {'label': 'Office', 'icon': AppImages.office},
       {'label': 'Shop', 'icon': AppImages.shop},
+      {'label': 'Marquee', 'icon': AppImages.img1},
+      {'label': 'Guest House', 'icon': AppImages.house},
+      {'label': 'Farm House', 'icon': AppImages.img2},
     ];
     final ads = List.generate(3, (i) {
       final type = i == 0 ? 'Hostel' : (i == 1 ? 'House' : 'Flat');
@@ -110,7 +113,7 @@ class _CategoryChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: Colors.red.withOpacity(0.08),
+          color: Colors.red.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: Colors.red),
         ),

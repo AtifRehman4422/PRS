@@ -45,5 +45,9 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Property Rent needs camera access to take photos for your ad.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Property Rent needs gallery access to pick photos for your ad.</string>
 </dict>
 </plist>

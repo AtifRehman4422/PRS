@@ -26,19 +26,20 @@ class _MyProfileViewState extends State<MyProfileView> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: colorScheme.surface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black),
+          icon: Icon(Icons.arrow_back_ios_new, color: colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'User Profile',
           style: TextStyle(
-            color: AppColors.textPrimary,
+            color: colorScheme.onSurface,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -75,10 +76,10 @@ class _MyProfileViewState extends State<MyProfileView> {
                           padding: const EdgeInsets.all(4),
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: Colors.white,
+                            color: colorScheme.surface,
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
+                              color: Colors.black.withValues(alpha: 0.1),
                                 blurRadius: 10,
                                 spreadRadius: 2,
                               ),
@@ -97,7 +98,7 @@ class _MyProfileViewState extends State<MyProfileView> {
                             decoration: BoxDecoration(
                               color: AppColors.primary,
                               shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white, width: 2),
+                              border: Border.all(color: colorScheme.surface, width: 2),
                             ),
                             child: const Icon(
                               Icons.edit,
@@ -117,16 +118,16 @@ class _MyProfileViewState extends State<MyProfileView> {
                   child: Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.9),
+                      color: colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
+                          color: Colors.black.withValues(alpha: 0.05),
                           blurRadius: 20,
                           offset: const Offset(0, 10),
                         ),
                       ],
-                      border: Border.all(color: Colors.white.withOpacity(0.5)),
+                      border: Border.all(color: colorScheme.outline.withValues(alpha: 0.2)),
                     ),
                     child: Column(
                       children: [
@@ -171,7 +172,7 @@ class _MyProfileViewState extends State<MyProfileView> {
                                 borderRadius: BorderRadius.circular(16),
                               ),
                               elevation: 4,
-                              shadowColor: AppColors.primary.withOpacity(0.4),
+                          shadowColor: AppColors.primary.withValues(alpha: 0.4),
                             ),
                             child: Text(
                               _isEditing ? 'Save Changes' : 'Edit Profile',
@@ -203,13 +204,14 @@ class _MyProfileViewState extends State<MyProfileView> {
     bool isObscure = false,
     bool isReadOnly = false,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
           style: TextStyle(
-            color: Colors.grey.shade600,
+            color: colorScheme.onSurface.withValues(alpha: 0.7),
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -217,9 +219,9 @@ class _MyProfileViewState extends State<MyProfileView> {
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            color: Colors.grey.shade50,
+            color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.shade200),
+            border: Border.all(color: colorScheme.outline.withValues(alpha: 0.3)),
           ),
           child: TextField(
             controller: controller,
@@ -227,16 +229,16 @@ class _MyProfileViewState extends State<MyProfileView> {
             readOnly: isReadOnly || !_isEditing,
             decoration: InputDecoration(
               hintText: value,
-              prefixIcon: Icon(icon, color: AppColors.primary.withOpacity(0.7)),
+              prefixIcon: Icon(icon, color: AppColors.primary.withValues(alpha: 0.7)),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               suffixIcon: isReadOnly
-                  ? Icon(Icons.visibility_off, color: Colors.grey.shade400)
+                  ? Icon(Icons.visibility_off, color: colorScheme.onSurface.withValues(alpha: 0.5))
                   : null,
             ),
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+              color: colorScheme.onSurface,
             ),
           ),
         ),

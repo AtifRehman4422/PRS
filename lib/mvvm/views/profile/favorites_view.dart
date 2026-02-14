@@ -15,6 +15,9 @@ class FavoritesView extends StatelessWidget {
       {'label': 'Flat', 'icon': AppImages.flat},
       {'label': 'Office', 'icon': AppImages.office},
       {'label': 'Shop', 'icon': AppImages.shop},
+      {'label': 'Marquee', 'icon': AppImages.img1},
+      {'label': 'Guest House', 'icon': AppImages.house},
+      {'label': 'Farm House', 'icon': AppImages.img2},
     ];
 
     final favorites = List.generate(3, (i) {
@@ -29,19 +32,20 @@ class FavoritesView extends StatelessWidget {
       };
     });
 
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: colorScheme.surface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black),
+          icon: Icon(Icons.arrow_back_ios_new, color: colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'My Favorites',
           style: TextStyle(
-            color: AppColors.textPrimary,
+            color: colorScheme.onSurface,
             fontWeight: FontWeight.bold,
           ),
         ),

@@ -50,18 +50,19 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
       height: size.height * 0.78,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(32),
           topRight: Radius.circular(32),
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.2),
+            color: AppColors.primary.withValues(alpha: 0.2),
             blurRadius: 25,
             spreadRadius: 5,
             offset: const Offset(0, -8),
@@ -88,7 +89,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                     height: 100,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.white.withOpacity(0.1),
+                      color: Colors.white.withValues(alpha: 0.1),
                     ),
                   ),
                 ),
@@ -100,7 +101,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                     height: 60,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.white.withOpacity(0.08),
+                      color: Colors.white.withValues(alpha: 0.08),
                     ),
                   ),
                 ),
@@ -113,10 +114,10 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                     child: Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: Colors.white.withOpacity(0.3),
+                          color: Colors.white.withValues(alpha: 0.3),
                         ),
                       ),
                       child: const Icon(
@@ -136,7 +137,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                         width: 50,
                         height: 5,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.5),
+                        color: Colors.white.withValues(alpha: 0.5),
                           borderRadius: BorderRadius.circular(3),
                         ),
                       ),
@@ -144,11 +145,11 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: colorScheme.surface,
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
+                              color: Colors.black.withValues(alpha: 0.1),
                               blurRadius: 10,
                             ),
                           ],
@@ -178,7 +179,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                       child: Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.1),
+                          color: AppColors.primary.withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                         ),
                         child: _gradientIcon(Icons.lock_reset, size: 40),
@@ -187,14 +188,14 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                     const SizedBox(height: 24),
 
                     // Title
-                    const FadeInSlide(
+                    FadeInSlide(
                       delay: 0.1,
                       child: Text(
                         'Forgot Password?',
                         style: TextStyle(
                           fontSize: 26,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
+                          color: colorScheme.onSurface,
                         ),
                       ),
                     ),
@@ -208,7 +209,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 14,
-                          color: AppColors.textSecondary,
+                          color: colorScheme.onSurface.withValues(alpha: 0.7),
                           height: 1.6,
                         ),
                       ),
@@ -220,16 +221,16 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                       delay: 0.3,
                       child: Container(
                         decoration: BoxDecoration(
-                          color: Colors.grey.shade50,
+                          color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.grey.shade200),
+                          border: Border.all(color: colorScheme.outline.withValues(alpha: 0.3)),
                         ),
                         child: TextFormField(
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
                           decoration: InputDecoration(
                             hintText: 'Enter your email',
-                            hintStyle: TextStyle(color: AppColors.hintText),
+                            hintStyle: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.5)),
                             prefixIcon: Padding(
                               padding: const EdgeInsets.all(12),
                               child: _gradientIcon(
@@ -299,7 +300,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                               borderRadius: BorderRadius.circular(32),
                             ),
                             elevation: 4,
-                            shadowColor: AppColors.primary.withOpacity(0.4),
+                          shadowColor: AppColors.primary.withValues(alpha: 0.4),
                           ),
                           child: const Row(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -328,7 +329,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                         children: [
                           Text(
                             'Remember password?',
-                            style: TextStyle(color: Colors.grey.shade600),
+                            style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.7)),
                           ),
                           TextButton(
                             onPressed: _goToLogin,

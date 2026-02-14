@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import 'package:propertyrent/core/app_color/app_colors.dart';
 import 'package:propertyrent/core/constants/app_images.dart';
 import 'package:propertyrent/core/animations/fade_in_slide.dart';
@@ -21,23 +23,175 @@ class _AddViewState extends State<AddView> {
     'Flat',
     'Office',
     'Shop',
+    'Marquee',
+    'Guest House',
+    'Farm House',
   ];
 
   // Hostel specific
   String _selectedHostelType = 'Boys';
+  // ignore: unused_field - reserved for hostel type chips UI
+  final List<String> _hostelTypes = ['Boys', 'Girls', 'Co-living'];
   int _selectedBeds = 1;
+  String _hostelRoomType = 'Single';
+  final List<String> _hostelRoomTypes = ['Single', 'Double', 'Triple'];
+  bool _hostelAttachedWashroom = false;
+  bool _hostelAc = false;
+  bool _hostelStudyTable = false;
+  bool _hostelWifi = false;
+  bool _hostelLaundry = false;
+  bool _hostelWater24 = false;
+  bool _hostelPowerBackup = false;
+  bool _hostelSecurity = false;
+  bool _hostelFoodIncluded = false;
+  String _hostelPreference = 'Students';
+  final List<String> _hostelPreferences = [
+    'Students',
+    'Working Professionals',
+    'Both',
+  ];
+  bool _hostelSmokingAllowed = false;
+  bool _hostelAlcoholAllowed = false;
+  // ignore: unused_field - reserved for hostel in-time rules UI
+  final String _hostelInTimeRules = 'No restriction';
+  final _hostelAvailableFromController = TextEditingController();
 
-  // House specific
-  String _selectedPortion = 'Upper Portion';
+  // House/Flat specific
+  String _selectedPortion = 'Full House';
   final List<String> _portions = [
+    'Full House',
     'Upper Portion',
     'Lower Portion',
-    'Middle Portion',
-    'Full',
+  ];
+  String _selectedBHK = '1BHK';
+  final List<String> _bhkTypes = ['1BHK', '2BHK', '3BHK', '4BHK', 'Villa'];
+  int _selectedFloor = 1;
+  String _houseFurnished = 'Unfurnished';
+  final List<String> _furnishedOptions = [
+    'Furnished',
+    'Semi-Furnished',
+    'Unfurnished',
+  ];
+  bool _houseBalcony = false;
+  bool _houseModularKitchen = false;
+  bool _houseLift = false;
+  bool _houseParking = false;
+  bool _houseWater24 = false;
+  bool _housePowerBackup = false;
+  bool _houseSecurity = false;
+  bool _houseGatedSociety = false;
+  String _housePreference = 'Family';
+  final List<String> _housePreferences = ['Family', 'Bachelor', 'Both'];
+  bool _housePetsAllowed = false;
+  bool _houseVegNonVeg = false;
+  final _houseAvailableFromController = TextEditingController();
+
+  // Flat specific improvements
+  bool _flatLift = false;
+  bool _flatBalcony = false;
+  String _flatFurnished = 'Unfurnished';
+  bool _flatGenerator = false;
+  bool _flatParking = false;
+  bool _flatModularKitchen = false;
+  bool _flatWater24 = false;
+  bool _flatSecurity = false;
+  bool _flatGatedSociety = false;
+
+  // Shop specific
+  String _shopLocation = 'Main Road';
+  final List<String> _shopLocations = ['Main Road', 'Inside Market'];
+  double _shopFrontWidth = 0;
+  double _shopCeilingHeight = 0;
+  String _shopFrontType = 'Shutter';
+  final List<String> _shopFrontTypes = ['Shutter', 'Glass Front'];
+  bool _shopElectricity = false;
+  bool _shopWater = false;
+  bool _shopWashroom = false;
+  bool _shopParking = false;
+  String _shopSuitableFor = 'General';
+  final List<String> _shopSuitableOptions = [
+    'Medical',
+    'Grocery',
+    'Salon',
+    'Showroom',
+    'General',
+  ];
+  final _shopAvailableFromController = TextEditingController();
+
+  // Office specific
+  int _selectedOfficeFloor = 1;
+  String _officeFurnished = 'Unfurnished';
+  int _officeCabins = 0;
+  int _officeWorkstations = 0;
+  bool _officeConferenceRoom = false;
+  bool _officeReception = false;
+  bool _officeLift = false;
+  bool _officeParking = false;
+  bool _officePowerBackup = false;
+  bool _officeInternetReady = false;
+  bool _officeSecurity = false;
+  String _officeSuitableFor = 'IT Company';
+  final List<String> _officeSuitableOptions = [
+    'IT Company',
+    'Startup',
+    'Consultancy',
+    'General',
+  ];
+  final _officeAvailableFromController = TextEditingController();
+
+  // Marquee/Banquet specific
+  int _maxGuests = 100;
+  bool _marqueeAc = false;
+  bool _marqueeStage = false;
+  bool _marqueeBridalRoom = false;
+  int _marqueeParkingCapacity = 0;
+  bool _marqueeGenerator = false;
+  bool _marqueeDecoration = false;
+  String _marqueeCatering = 'In-house';
+  final List<String> _marqueeCateringOptions = [
+    'In-house',
+    'Outside Allowed',
+    'Both',
+  ];
+  String _marqueeSuitableFor = 'Wedding';
+  final List<String> _marqueeSuitableOptions = [
+    'Wedding',
+    'Party',
+    'Corporate Events',
+    'All',
   ];
 
-  // Flat specific
-  int _selectedFloor = 1;
+  // Guest House specific
+  int _guestHouseRooms = 1;
+  bool _guestHouseAc = false;
+  bool _guestHouseAttachedBathroom = false;
+  bool _guestHouseTv = false;
+  bool _guestHouseWifi = false;
+  bool _guestHouseRoomService = false;
+  bool _guestHouseParking = false;
+  bool _guestHousePowerBackup = false;
+  String _guestHousePreference = 'Family';
+  final List<String> _guestHousePreferences = ['Family', 'Corporate', 'Both'];
+  final _guestHouseAvailableFromController = TextEditingController();
+
+  // Farm House specific
+  double _farmLandSize = 0;
+  bool _farmLawn = false;
+  bool _farmGarden = false;
+  bool _farmRooms = false;
+  bool _farmHall = false;
+  bool _farmSwimmingPool = false;
+  bool _farmParking = false;
+  bool _farmElectricity = false;
+  bool _farmWaterSupply = false;
+  String _farmSuitableFor = 'Picnic';
+  final List<String> _farmSuitableOptions = [
+    'Picnic',
+    'Party',
+    'Events',
+    'All',
+  ];
+  final _farmAvailableFromController = TextEditingController();
 
   // Common fields - using int for sliders
   int _selectedRoom = 1;
@@ -55,16 +209,151 @@ class _AddViewState extends State<AddView> {
     'Kanal',
   ];
 
-  String _selectedCity = 'Islamabad';
+  final String _selectedCity = 'Islamabad';
+  // ignore: unused_field - reserved for time slot filter
+  final String _selectedTimeSlot = 'Day';
+  bool _isNegotiable = false;
+
+  bool get _isEventProperty =>
+      ['Marquee', 'Guest House', 'Farm House'].contains(_selectedPropertyType);
+
+  // ignore: unused_field - amenities for event properties (future use)
+  final Map<String, bool> _amenities = {
+    'Catering available': false,
+    'AC': false,
+    'Parking': false,
+    'Generator / Backup': false,
+    'Bridal room': false,
+    'Rooms for stay': false,
+    'Decoration available': false,
+    'Sound system': false,
+    'Security': false,
+  };
 
   // Controllers
+  final _sectorController = TextEditingController();
+  final _mapPinController = TextEditingController();
+  final _landmarkController = TextEditingController();
+  final _rentPerDayController = TextEditingController();
+  final _rentPerEventController = TextEditingController();
+  final _advanceController = TextEditingController();
+  final _discountController = TextEditingController();
+  final _maintenanceController = TextEditingController();
+  final _securityController = TextEditingController();
+  final _ownerNameController = TextEditingController();
+  final _whatsappController = TextEditingController();
   final _areaController = TextEditingController();
   final _rentController = TextEditingController();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _hostelInTimeRulesController = TextEditingController();
+  final _shopFrontWidthController = TextEditingController();
+  final _shopCeilingHeightController = TextEditingController();
+  final _farmLandSizeController = TextEditingController();
 
+  final List<String> _selectedImages = [];
+  final ImagePicker _picker = ImagePicker();
+  static const int _maxImages = 6; // Min 1 & max 6 per guideline
+
+  void _addImage(String path) {
+    if (_selectedImages.length >= _maxImages) return;
+    setState(() {
+      _selectedImages.add(path);
+    });
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Image added (${_selectedImages.length}/$_maxImages)'),
+          duration: const Duration(seconds: 1),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  void _removeImageAt(int index) {
+    if (index < 0 || index >= _selectedImages.length) return;
+    setState(() {
+      _selectedImages.removeAt(index);
+    });
+  }
+
+  /// Gallery: pick one or multiple images (min 1, max 6 total).
+  Future<void> _pickFromGallery() async {
+    try {
+      final remaining = _maxImages - _selectedImages.length;
+      if (remaining <= 0) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Maximum $_maxImages images allowed'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+        return;
+      }
+      final files = await _picker.pickMultiImage();
+      if (files.isNotEmpty && mounted) {
+        final toAdd = files.take(remaining).map((x) => x.path).toList();
+        setState(() {
+          for (final path in toAdd) {
+            if (_selectedImages.length < _maxImages) _selectedImages.add(path);
+          }
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${toAdd.length} image(s) added (${_selectedImages.length}/$_maxImages)'),
+              duration: const Duration(seconds: 1),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not open gallery: $e'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Camera: take one photo and add it. Shows in Selected Images above Save.
+  Future<void> _pickFromCamera() async {
+    try {
+      if (_selectedImages.length >= _maxImages) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Maximum $_maxImages images allowed'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+        return;
+      }
+      final file = await _picker.pickImage(source: ImageSource.camera);
+      if (file != null) {
+        _addImage(file.path);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not open camera: $e'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
   @override
   void dispose() {
     _areaController.dispose();
@@ -73,6 +362,27 @@ class _AddViewState extends State<AddView> {
     _descriptionController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
+    _sectorController.dispose();
+    _mapPinController.dispose();
+    _landmarkController.dispose();
+    _rentPerDayController.dispose();
+    _rentPerEventController.dispose();
+    _advanceController.dispose();
+    _discountController.dispose();
+    _maintenanceController.dispose();
+    _securityController.dispose();
+    _ownerNameController.dispose();
+    _whatsappController.dispose();
+    _hostelAvailableFromController.dispose();
+    _houseAvailableFromController.dispose();
+    _shopAvailableFromController.dispose();
+    _officeAvailableFromController.dispose();
+    _guestHouseAvailableFromController.dispose();
+    _farmAvailableFromController.dispose();
+    _hostelInTimeRulesController.dispose();
+    _shopFrontWidthController.dispose();
+    _shopCeilingHeightController.dispose();
+    _farmLandSizeController.dispose();
     super.dispose();
   }
 
@@ -97,7 +407,7 @@ class _AddViewState extends State<AddView> {
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      backgroundColor: AppColors.surface,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: SafeArea(
         child: Form(
           key: _formKey,
@@ -132,51 +442,72 @@ class _AddViewState extends State<AddView> {
                       // Conditional fields based on property type
                       ..._buildPropertySpecificFields(),
 
-                      // Common fields with sliders
-                      FadeInSlide(
-                        delay: 0.2,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildSectionTitle(
-                              Icons.door_sliding_outlined,
-                              'Select Room',
-                            ),
-                            const SizedBox(height: 8),
-                            _buildSlider(_selectedRoom, 1, 25, (val) {
-                              setState(() => _selectedRoom = val);
-                            }),
-                            _buildDivider(),
+                      // Common fields with sliders - Hidden for event properties and for Hostel/Shop
+                      if (!_isEventProperty &&
+                          _selectedPropertyType != 'Hostel' &&
+                          _selectedPropertyType != 'Shop')
+                        FadeInSlide(
+                          delay: 0.2,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildSectionTitle(
+                                Icons.door_sliding_outlined,
+                                'Select Room',
+                              ),
+                              const SizedBox(height: 8),
+                              _buildSlider('Rooms', _selectedRoom, 1, 25, (
+                                val,
+                              ) {
+                                setState(() => _selectedRoom = val);
+                              }),
+                              _buildDivider(),
 
-                            _buildSectionTitle(
-                              Icons.bathtub_outlined,
-                              'Select Bathrooms',
-                            ),
-                            const SizedBox(height: 8),
-                            _buildSlider(_selectedBathroom, 1, 10, (val) {
-                              setState(() => _selectedBathroom = val);
-                            }),
-                            _buildDivider(),
+                              _buildSectionTitle(
+                                Icons.bathtub_outlined,
+                                'Select Bathrooms',
+                              ),
+                              const SizedBox(height: 8),
+                              _buildSlider(
+                                'Bathrooms',
+                                _selectedBathroom,
+                                1,
+                                10,
+                                (val) {
+                                  setState(() => _selectedBathroom = val);
+                                },
+                              ),
+                              _buildDivider(),
 
-                            _buildSectionTitle(
-                              Icons.kitchen_outlined,
-                              'Select Kitchen',
-                            ),
-                            const SizedBox(height: 8),
-                            _buildSlider(_selectedKitchen, 1, 5, (val) {
-                              setState(() => _selectedKitchen = val);
-                            }),
-                            _buildDivider(),
+                              _buildSectionTitle(
+                                Icons.kitchen_outlined,
+                                'Select Kitchen',
+                              ),
+                              const SizedBox(height: 8),
+                              _buildSlider('Kitchens', _selectedKitchen, 1, 5, (
+                                val,
+                              ) {
+                                setState(() => _selectedKitchen = val);
+                              }),
+                              _buildDivider(),
 
-                            _buildSectionTitle(Icons.tv, 'Select TV Lounge'),
-                            const SizedBox(height: 8),
-                            _buildSlider(_selectedTVLounge, 1, 5, (val) {
-                              setState(() => _selectedTVLounge = val);
-                            }),
-                            _buildDivider(),
-                          ],
+                              if (_selectedPropertyType != 'Office') ...[
+                                _buildSectionTitle(Icons.tv, 'Select TV Lounge'),
+                                const SizedBox(height: 8),
+                                _buildSlider(
+                                  'TV Lounges',
+                                  _selectedTVLounge,
+                                  1,
+                                  5,
+                                  (val) {
+                                    setState(() => _selectedTVLounge = val);
+                                  },
+                                ),
+                                _buildDivider(),
+                              ],
+                            ],
+                          ),
                         ),
-                      ),
 
                       FadeInSlide(
                         delay: 0.3,
@@ -207,42 +538,56 @@ class _AddViewState extends State<AddView> {
                         ),
                       ),
 
-                      FadeInSlide(
-                        delay: 0.4,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildSectionTitle(
-                              Icons.local_laundry_service,
-                              'Select Laundry',
-                            ),
-                            const SizedBox(height: 8),
-                            _buildDropdown(_selectedLaundry, ['Yes', 'No'], (
-                              val,
-                            ) {
-                              setState(() => _selectedLaundry = val!);
-                            }),
-                            _buildDivider(),
+                      if (!_isEventProperty)
+                        FadeInSlide(
+                          delay: 0.4,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (_selectedPropertyType != 'House' &&
+                                  _selectedPropertyType != 'Flat') ...[
+                                _buildSectionTitle(
+                                  Icons.local_laundry_service,
+                                  'Select Laundry',
+                                ),
+                                const SizedBox(height: 8),
+                                _buildDropdown(
+                                  'Laundry',
+                                  _selectedLaundry,
+                                  ['Yes', 'No'],
+                                  (val) {
+                                    setState(() => _selectedLaundry = val!);
+                                  },
+                                ),
+                                _buildDivider(),
 
-                            _buildSectionTitle(Icons.restaurant, 'Select Mess'),
-                            const SizedBox(height: 8),
-                            _buildDropdown(_selectedMess, ['Yes', 'No'], (val) {
-                              setState(() => _selectedMess = val!);
-                            }),
-                            _buildDivider(),
-                          ],
+                                _buildSectionTitle(
+                                  Icons.restaurant,
+                                  'Select Mess',
+                                ),
+                                const SizedBox(height: 8),
+                                _buildDropdown(
+                                  'Mess',
+                                  _selectedMess,
+                                  ['Yes', 'No'],
+                                  (val) {
+                                    setState(() => _selectedMess = val!);
+                                  },
+                                ),
+                                _buildDivider(),
+                              ],
+                            ],
+                          ),
                         ),
-                      ),
 
                       FadeInSlide(
                         delay: 0.5,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildSectionTitle(Icons.sell, 'Property Rent'),
-                            const SizedBox(height: 8),
-                            _buildRentField(),
-                            _buildDivider(),
+                            if (!_isEventProperty) ...[
+                              _buildModernRentSection(),
+                            ],
 
                             _buildSectionTitle(Icons.title, 'Property Title'),
                             const SizedBox(height: 8),
@@ -279,9 +624,32 @@ class _AddViewState extends State<AddView> {
                             ),
                             _buildDivider(),
 
+                            // Unified Contact Section for all property types
+                            _buildSectionTitle(Icons.person, 'Owner Name'),
+                            const SizedBox(height: 8),
+                            _buildTextField(
+                              _ownerNameController,
+                              'Enter name',
+                              'Name required',
+                            ),
+                            _buildDivider(),
+                            _buildSectionTitle(Icons.chat, 'WhatsApp Number'),
+                            const SizedBox(height: 8),
+                            _buildTextField(
+                              _whatsappController,
+                              'Enter WhatsApp number',
+                              'WhatsApp required',
+                              TextInputType.phone,
+                            ),
+                            _buildDivider(),
                             _buildSectionTitle(Icons.phone, 'Contact Number'),
                             const SizedBox(height: 8),
-                            _buildPhoneField(),
+                            _buildTextField(
+                              _phoneController,
+                              'Enter phone number',
+                              'Phone required',
+                              TextInputType.phone,
+                            ),
                             _buildDivider(),
                           ],
                         ),
@@ -298,6 +666,11 @@ class _AddViewState extends State<AddView> {
                             const SizedBox(height: 32),
                           ],
                         ),
+                      ),
+
+                      FadeInSlide(
+                        delay: 0.75,
+                        child: _buildSelectedImagesRow(),
                       ),
 
                       FadeInSlide(
@@ -321,15 +694,16 @@ class _AddViewState extends State<AddView> {
   }
 
   Widget _buildDivider() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 16),
       height: 1,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppColors.primary.withOpacity(0.3),
-            AppColors.borderLight,
-            AppColors.primary.withOpacity(0.3),
+            AppColors.primary.withValues(alpha: 0.3),
+            colorScheme.outline.withValues(alpha: 0.3),
+            AppColors.primary.withValues(alpha: 0.3),
           ],
         ),
       ),
@@ -353,7 +727,7 @@ class _AddViewState extends State<AddView> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.25),
+                    color: Colors.white.withValues(alpha: 0.25),
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(80),
                       topRight: Radius.circular(25),
@@ -363,7 +737,8 @@ class _AddViewState extends State<AddView> {
                   ),
                   child: Image.asset(
                     AppImages.addHome,
-                    height: size.height * 0.16,
+                    height: size.height * 0.2, // Made it bigger
+                    color: Colors.white, // Made it white as requested
                     fit: BoxFit.contain,
                   ),
                 ),
@@ -381,7 +756,7 @@ class _AddViewState extends State<AddView> {
                         color: Colors.white,
                         shadows: [
                           Shadow(
-                            color: Colors.black.withOpacity(0.2),
+                            color: Colors.black.withValues(alpha: 0.2),
                             offset: const Offset(2, 2),
                             blurRadius: 4,
                           ),
@@ -393,7 +768,7 @@ class _AddViewState extends State<AddView> {
                       'Share your property',
                       style: TextStyle(
                         fontSize: size.width * 0.035,
-                        color: Colors.white.withOpacity(0.9),
+                        color: Colors.white.withValues(alpha: 0.9),
                       ),
                     ),
                   ],
@@ -407,6 +782,7 @@ class _AddViewState extends State<AddView> {
   }
 
   Widget _buildSectionTitle(IconData icon, String title) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -414,7 +790,7 @@ class _AddViewState extends State<AddView> {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
+              color: AppColors.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: _gradientIcon(
@@ -427,10 +803,10 @@ class _AddViewState extends State<AddView> {
           const SizedBox(width: 12),
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
+              color: colorScheme.onSurface,
             ),
           ),
         ],
@@ -439,6 +815,7 @@ class _AddViewState extends State<AddView> {
   }
 
   Widget _buildPropertyTypeChips() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Wrap(
       spacing: 10,
       runSpacing: 10,
@@ -455,17 +832,17 @@ class _AddViewState extends State<AddView> {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             decoration: BoxDecoration(
               color: isSelected
-                  ? AppColors.primary.withOpacity(0.1)
+                  ? AppColors.primary.withValues(alpha: 0.1)
                   : Colors.transparent,
               border: Border.all(
-                color: isSelected ? AppColors.primary : AppColors.borderLight,
+                color: isSelected ? AppColors.primary : colorScheme.outline.withValues(alpha: 0.5),
                 width: isSelected ? 2 : 1,
               ),
               borderRadius: BorderRadius.circular(25),
               boxShadow: isSelected
                   ? [
                       BoxShadow(
-                        color: AppColors.primary.withOpacity(0.2),
+                        color: AppColors.primary.withValues(alpha: 0.2),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -475,7 +852,7 @@ class _AddViewState extends State<AddView> {
             child: Text(
               type,
               style: TextStyle(
-                color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                color: isSelected ? AppColors.primary : colorScheme.onSurface,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
             ),
@@ -494,52 +871,762 @@ class _AddViewState extends State<AddView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildSectionTitle(Icons.home_work, 'Select Hostel'),
+                _buildSectionTitle(Icons.wc, 'Hostel Type'),
                 const SizedBox(height: 8),
                 _buildHostelTypeChips(),
                 _buildDivider(),
-                _buildSectionTitle(Icons.bed, 'Select Beds'),
+
+                _buildSectionTitle(Icons.meeting_room, 'Room Type'),
+                const SizedBox(height: 8),
+                _buildDropdown('Type', _hostelRoomType, _hostelRoomTypes, (
+                  val,
+                ) {
+                  setState(() => _hostelRoomType = val!);
+                }),
+                _buildDivider(),
+
+                _buildSectionTitle(Icons.bed, 'Beds per Room'),
                 const SizedBox(height: 12),
                 _buildBedsGrid(),
                 _buildDivider(),
+
+                _buildSectionTitle(Icons.room_preferences, 'Room Features'),
+                const SizedBox(height: 8),
+                _buildCheckboxes(
+                  {
+                    'Attached Washroom': _hostelAttachedWashroom,
+                    'AC': _hostelAc,
+                    'Study Table & Chair': _hostelStudyTable,
+                  },
+                  (key, val) {
+                    setState(() {
+                      if (key == 'Attached Washroom')
+                        _hostelAttachedWashroom = val;
+                      if (key == 'AC') _hostelAc = val;
+                      if (key == 'Study Table & Chair') _hostelStudyTable = val;
+                    });
+                  },
+                ),
+                _buildDivider(),
+
+                _buildSectionTitle(
+                  Icons.featured_play_list,
+                  'Facilities / Amenities',
+                ),
+                const SizedBox(height: 8),
+                _buildCheckboxes(
+                  {
+                    'Food Included': _hostelFoodIncluded,
+                    'WiFi': _hostelWifi,
+                    'Laundry': _hostelLaundry,
+                    '24 Hours Water': _hostelWater24,
+                    'Power Backup': _hostelPowerBackup,
+                    'Security / CCTV': _hostelSecurity,
+                  },
+                  (key, val) {
+                    setState(() {
+                      if (key == 'Food Included') _hostelFoodIncluded = val;
+                      if (key == 'WiFi') _hostelWifi = val;
+                      if (key == 'Laundry') _hostelLaundry = val;
+                      if (key == '24 Hours Water') _hostelWater24 = val;
+                      if (key == 'Power Backup') _hostelPowerBackup = val;
+                      if (key == 'Security / CCTV') _hostelSecurity = val;
+                    });
+                  },
+                ),
+                _buildDivider(),
+
+                _buildSectionTitle(Icons.people, 'Preferences'),
+                const SizedBox(height: 8),
+                _buildDropdown(
+                  'Suitable For',
+                  _hostelPreference,
+                  _hostelPreferences,
+                  (val) {
+                    setState(() => _hostelPreference = val!);
+                  },
+                ),
+                const SizedBox(height: 12),
+                _buildCheckboxes(
+                  {
+                    'Smoking Allowed': _hostelSmokingAllowed,
+                    'Alcohol Allowed': _hostelAlcoholAllowed,
+                  },
+                  (key, val) {
+                    setState(() {
+                      if (key == 'Smoking Allowed') _hostelSmokingAllowed = val;
+                      if (key == 'Alcohol Allowed') _hostelAlcoholAllowed = val;
+                    });
+                  },
+                ),
+                _buildDivider(),
+
+                _buildSectionTitle(Icons.access_time, 'In Time Rules'),
+                const SizedBox(height: 8),
+                _buildTextField(
+                  _hostelInTimeRulesController,
+                  'e.g., 10 PM or No restriction',
+                  '',
+                ),
+                _buildDivider(),
+
+                _buildSectionTitle(Icons.calendar_today, 'Available From'),
+                const SizedBox(height: 8),
+                _buildTextField(
+                  _hostelAvailableFromController,
+                  'Select date',
+                  '',
+                  TextInputType.datetime,
+                ),
+                _buildDivider(),
               ],
             ),
           ),
         ];
+
       case 'House':
-        return [
-          FadeInSlide(
-            delay: 0.15,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildSectionTitle(Icons.home, 'Portions'),
-                const SizedBox(height: 8),
-                _buildDropdown(_selectedPortion, _portions, (val) {
-                  setState(() => _selectedPortion = val!);
-                }),
-                _buildDivider(),
-              ],
-            ),
-          ),
-        ];
       case 'Flat':
+        final isHouse = _selectedPropertyType == 'House';
         return [
           FadeInSlide(
             delay: 0.15,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildSectionTitle(Icons.home, 'Floors'),
+                _buildSectionTitle(
+                  isHouse ? Icons.home : Icons.apartment,
+                  isHouse ? 'House Details' : 'Flat Details',
+                ),
                 const SizedBox(height: 8),
-                _buildSlider(_selectedFloor, 1, 20, (val) {
-                  setState(() => _selectedFloor = val);
-                }),
+
+                if (isHouse) ...[
+                  _buildDropdown('House Type', _selectedPortion, _portions, (
+                    val,
+                  ) {
+                    setState(() => _selectedPortion = val!);
+                  }),
+                  _buildDivider(),
+                ],
+
+                if (!isHouse) ...[
+                  _buildDropdown('BHK Type', _selectedBHK, _bhkTypes, (val) {
+                    setState(() => _selectedBHK = val!);
+                  }),
+                  _buildDivider(),
+                ],
+
+                if (!isHouse) ...[
+                  _buildSectionTitle(Icons.layers, 'Floor Number'),
+                  const SizedBox(height: 8),
+                  _buildSlider('Floor', _selectedFloor, 1, 30, (val) {
+                    setState(() => _selectedFloor = val);
+                  }),
+                  _buildDivider(),
+                ],
+
+                _buildSectionTitle(Icons.chair, 'Furnished Status'),
+                const SizedBox(height: 8),
+                _buildDropdown(
+                  'Status',
+                  isHouse ? _houseFurnished : _flatFurnished,
+                  _furnishedOptions,
+                  (val) {
+                    setState(() {
+                      if (isHouse) {
+                        _houseFurnished = val!;
+                      } else {
+                        _flatFurnished = val!;
+                      }
+                    });
+                  },
+                ),
+                _buildDivider(),
+
+                _buildSectionTitle(Icons.featured_play_list, 'Features'),
+                const SizedBox(height: 8),
+                _buildCheckboxes(
+                  isHouse
+                      ? {
+                          'Balcony': _houseBalcony,
+                          'Modular Kitchen': _houseModularKitchen,
+                          'Lift': _houseLift,
+                          'Parking': _houseParking,
+                        }
+                      : {
+                          'Lift': _flatLift,
+                          'Balcony': _flatBalcony,
+                          'Modular Kitchen': _flatModularKitchen,
+                          'Parking': _flatParking,
+                          'Backup Generator': _flatGenerator,
+                        },
+                  (key, val) {
+                    setState(() {
+                      if (isHouse) {
+                        if (key == 'Balcony') _houseBalcony = val;
+                        if (key == 'Modular Kitchen')
+                          _houseModularKitchen = val;
+                        if (key == 'Lift') _houseLift = val;
+                        if (key == 'Parking') _houseParking = val;
+                      } else {
+                        if (key == 'Lift') _flatLift = val;
+                        if (key == 'Balcony') _flatBalcony = val;
+                        if (key == 'Modular Kitchen') _flatModularKitchen = val;
+                        if (key == 'Parking') _flatParking = val;
+                        if (key == 'Backup Generator') _flatGenerator = val;
+                      }
+                    });
+                  },
+                ),
+                _buildDivider(),
+
+                _buildSectionTitle(Icons.apartment_outlined, 'Facilities'),
+                const SizedBox(height: 8),
+                _buildCheckboxes(
+                  isHouse
+                      ? {
+                          '24 Hours Water': _houseWater24,
+                          'Power Backup': _housePowerBackup,
+                          'Security / CCTV': _houseSecurity,
+                          'Gated Society': _houseGatedSociety,
+                        }
+                      : {
+                          '24 Hours Water': _flatWater24,
+                          'Security / CCTV': _flatSecurity,
+                          'Gated Society': _flatGatedSociety,
+                        },
+                  (key, val) {
+                    setState(() {
+                      if (isHouse) {
+                        if (key == '24 Hours Water') _houseWater24 = val;
+                        if (key == 'Power Backup') _housePowerBackup = val;
+                        if (key == 'Security / CCTV') _houseSecurity = val;
+                        if (key == 'Gated Society') _houseGatedSociety = val;
+                      } else {
+                        if (key == '24 Hours Water') _flatWater24 = val;
+                        if (key == 'Security / CCTV') _flatSecurity = val;
+                        if (key == 'Gated Society') _flatGatedSociety = val;
+                      }
+                    });
+                  },
+                ),
+                _buildDivider(),
+
+                _buildSectionTitle(Icons.people, 'Preferences'),
+                const SizedBox(height: 8),
+                _buildDropdown(
+                  'Suitable For',
+                  _housePreference,
+                  _housePreferences,
+                  (val) {
+                    setState(() => _housePreference = val!);
+                  },
+                ),
+                const SizedBox(height: 12),
+                _buildCheckboxes(
+                  {
+                    'Pets Allowed': _housePetsAllowed,
+                    'Non-Veg Allowed': _houseVegNonVeg,
+                  },
+                  (key, val) {
+                    setState(() {
+                      if (key == 'Pets Allowed') _housePetsAllowed = val;
+                      if (key == 'Non-Veg Allowed') _houseVegNonVeg = val;
+                    });
+                  },
+                ),
+                _buildDivider(),
+
+                _buildSectionTitle(Icons.calendar_today, 'Available From'),
+                const SizedBox(height: 8),
+                _buildTextField(
+                  _houseAvailableFromController,
+                  'Select date',
+                  '',
+                  TextInputType.datetime,
+                ),
                 _buildDivider(),
               ],
             ),
           ),
         ];
+
+      case 'Shop':
+        return [
+          FadeInSlide(
+            delay: 0.15,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildSectionTitle(Icons.store, 'Shop Details'),
+                const SizedBox(height: 8),
+                _buildDropdown('Location Type', _shopLocation, _shopLocations, (
+                  val,
+                ) {
+                  setState(() => _shopLocation = val!);
+                }),
+                _buildDivider(),
+
+                _buildSectionTitle(Icons.straighten, 'Shop Dimensions'),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildTextField(
+                        TextEditingController(text: _shopFrontWidth.toString())
+                          ..addListener(() {
+                            _shopFrontWidth =
+                                double.tryParse(
+                                  TextEditingController(
+                                    text: _shopFrontWidth.toString(),
+                                  ).text,
+                                ) ??
+                                0;
+                          }),
+                        'Front Width (ft)',
+                        '',
+                        TextInputType.number,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildTextField(
+                        TextEditingController(
+                          text: _shopCeilingHeight.toString(),
+                        )..addListener(() {
+                          _shopCeilingHeight =
+                              double.tryParse(
+                                TextEditingController(
+                                  text: _shopCeilingHeight.toString(),
+                                ).text,
+                              ) ??
+                              0;
+                        }),
+                        'Ceiling Height (ft)',
+                        '',
+                        TextInputType.number,
+                      ),
+                    ),
+                  ],
+                ),
+                _buildDivider(),
+
+                _buildSectionTitle(Icons.door_front_door, 'Front Type'),
+                const SizedBox(height: 8),
+                _buildDropdown('Type', _shopFrontType, _shopFrontTypes, (val) {
+                  setState(() => _shopFrontType = val!);
+                }),
+                _buildDivider(),
+
+                _buildSectionTitle(Icons.featured_play_list, 'Facilities'),
+                const SizedBox(height: 8),
+                _buildCheckboxes(
+                  {
+                    'Electricity': _shopElectricity,
+                    'Water': _shopWater,
+                    'Washroom': _shopWashroom,
+                    'Parking Nearby': _shopParking,
+                  },
+                  (key, val) {
+                    setState(() {
+                      if (key == 'Electricity') _shopElectricity = val;
+                      if (key == 'Water') _shopWater = val;
+                      if (key == 'Washroom') _shopWashroom = val;
+                      if (key == 'Parking Nearby') _shopParking = val;
+                    });
+                  },
+                ),
+                _buildDivider(),
+
+                _buildSectionTitle(Icons.business, 'Suitable For'),
+                const SizedBox(height: 8),
+                _buildDropdown(
+                  'Business Type',
+                  _shopSuitableFor,
+                  _shopSuitableOptions,
+                  (val) {
+                    setState(() => _shopSuitableFor = val!);
+                  },
+                ),
+                _buildDivider(),
+
+                _buildSectionTitle(Icons.calendar_today, 'Available From'),
+                const SizedBox(height: 8),
+                _buildTextField(
+                  _shopAvailableFromController,
+                  'Select date',
+                  '',
+                  TextInputType.datetime,
+                ),
+                _buildDivider(),
+              ],
+            ),
+          ),
+        ];
+
+      case 'Office':
+        return [
+          FadeInSlide(
+            delay: 0.15,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildSectionTitle(Icons.business_center, 'Office Details'),
+                const SizedBox(height: 8),
+
+                _buildSectionTitle(Icons.chair, 'Furnished Status'),
+                const SizedBox(height: 8),
+                _buildDropdown('Status', _officeFurnished, _furnishedOptions, (
+                  val,
+                ) {
+                  setState(() => _officeFurnished = val!);
+                }),
+                _buildDivider(),
+
+                _buildSectionTitle(Icons.layers, 'Floor Number'),
+                const SizedBox(height: 8),
+                _buildSlider('Floor', _selectedOfficeFloor, 0, 50, (val) {
+                  setState(() => _selectedOfficeFloor = val);
+                }),
+                _buildDivider(),
+
+                _buildSectionTitle(Icons.meeting_room, 'Office Layout'),
+                const SizedBox(height: 8),
+                _buildSlider('Cabins', _officeCabins, 0, 20, (val) {
+                  setState(() => _officeCabins = val);
+                }),
+                const SizedBox(height: 12),
+                _buildSlider('Workstations', _officeWorkstations, 0, 100, (
+                  val,
+                ) {
+                  setState(() => _officeWorkstations = val);
+                }),
+                _buildDivider(),
+
+                _buildSectionTitle(Icons.featured_play_list, 'Office Features'),
+                const SizedBox(height: 8),
+                _buildCheckboxes(
+                  {
+                    'Conference Room': _officeConferenceRoom,
+                    'Reception Area': _officeReception,
+                    'Lift': _officeLift,
+                    'Parking': _officeParking,
+                  },
+                  (key, val) {
+                    setState(() {
+                      if (key == 'Conference Room') _officeConferenceRoom = val;
+                      if (key == 'Reception Area') _officeReception = val;
+                      if (key == 'Lift') _officeLift = val;
+                      if (key == 'Parking') _officeParking = val;
+                    });
+                  },
+                ),
+                _buildDivider(),
+
+                _buildSectionTitle(Icons.power, 'Facilities'),
+                const SizedBox(height: 8),
+                _buildCheckboxes(
+                  {
+                    'Power Backup': _officePowerBackup,
+                    'Internet Ready': _officeInternetReady,
+                    'Security': _officeSecurity,
+                  },
+                  (key, val) {
+                    setState(() {
+                      if (key == 'Power Backup') _officePowerBackup = val;
+                      if (key == 'Internet Ready') _officeInternetReady = val;
+                      if (key == 'Security') _officeSecurity = val;
+                    });
+                  },
+                ),
+                _buildDivider(),
+
+                _buildSectionTitle(Icons.business, 'Suitable For'),
+                const SizedBox(height: 8),
+                _buildDropdown(
+                  'Business Type',
+                  _officeSuitableFor,
+                  _officeSuitableOptions,
+                  (val) {
+                    setState(() => _officeSuitableFor = val!);
+                  },
+                ),
+                _buildDivider(),
+
+                _buildSectionTitle(Icons.calendar_today, 'Available From'),
+                const SizedBox(height: 8),
+                _buildTextField(
+                  _officeAvailableFromController,
+                  'Select date',
+                  '',
+                  TextInputType.datetime,
+                ),
+                _buildDivider(),
+              ],
+            ),
+          ),
+        ];
+
+      case 'Marquee':
+        return [
+          FadeInSlide(
+            delay: 0.15,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Removed Marquee Details heading as requested
+
+                _buildSectionTitle(Icons.groups, 'Capacity'),
+                const SizedBox(height: 8),
+                _buildSlider('Guest Capacity', _maxGuests, 50, 5000, (val) {
+                  setState(() => _maxGuests = val);
+                }),
+                const SizedBox(height: 12),
+                _buildSlider(
+                  'Parking Capacity',
+                  _marqueeParkingCapacity,
+                  0,
+                  500,
+                  (val) {
+                    setState(() => _marqueeParkingCapacity = val);
+                  },
+                ),
+                _buildDivider(),
+
+                _buildSectionTitle(Icons.featured_play_list, 'Hall Features'),
+                const SizedBox(height: 8),
+                _buildCheckboxes(
+                  {
+                    'AC': _marqueeAc,
+                    'Stage': _marqueeStage,
+                    'Bridal Room': _marqueeBridalRoom,
+                  },
+                  (key, val) {
+                    setState(() {
+                      if (key == 'AC') _marqueeAc = val;
+                      if (key == 'Stage') _marqueeStage = val;
+                      if (key == 'Bridal Room') _marqueeBridalRoom = val;
+                    });
+                  },
+                ),
+                _buildDivider(),
+
+                _buildSectionTitle(Icons.restaurant, 'Facilities'),
+                const SizedBox(height: 8),
+                _buildCheckboxes(
+                  {
+                    'Generator Backup': _marqueeGenerator,
+                    'Decoration Available': _marqueeDecoration,
+                  },
+                  (key, val) {
+                    setState(() {
+                      if (key == 'Generator Backup') _marqueeGenerator = val;
+                      if (key == 'Decoration Available')
+                        _marqueeDecoration = val;
+                    });
+                  },
+                ),
+                const SizedBox(height: 12),
+                _buildDropdown(
+                  'Catering',
+                  _marqueeCatering,
+                  _marqueeCateringOptions,
+                  (val) {
+                    setState(() => _marqueeCatering = val!);
+                  },
+                ),
+                _buildDivider(),
+
+                _buildSectionTitle(Icons.celebration, 'Suitable For'),
+                const SizedBox(height: 8),
+                _buildDropdown(
+                  'Event Type',
+                  _marqueeSuitableFor,
+                  _marqueeSuitableOptions,
+                  (val) {
+                    setState(() => _marqueeSuitableFor = val!);
+                  },
+                ),
+                _buildDivider(),
+              ],
+            ),
+          ),
+        ];
+
+      case 'Guest House':
+        return [
+          FadeInSlide(
+            delay: 0.15,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildSectionTitle(Icons.hotel, 'Guest House Details'),
+                const SizedBox(height: 8),
+
+                _buildSlider('Number of Rooms', _guestHouseRooms, 1, 50, (val) {
+                  setState(() => _guestHouseRooms = val);
+                }),
+                _buildDivider(),
+
+                _buildSectionTitle(Icons.room_preferences, 'Room Features'),
+                const SizedBox(height: 8),
+                _buildCheckboxes(
+                  {
+                    'AC': _guestHouseAc,
+                    'Attached Bathroom': _guestHouseAttachedBathroom,
+                    'TV': _guestHouseTv,
+                    'WiFi': _guestHouseWifi,
+                  },
+                  (key, val) {
+                    setState(() {
+                      if (key == 'AC') _guestHouseAc = val;
+                      if (key == 'Attached Bathroom')
+                        _guestHouseAttachedBathroom = val;
+                      if (key == 'TV') _guestHouseTv = val;
+                      if (key == 'WiFi') _guestHouseWifi = val;
+                    });
+                  },
+                ),
+                _buildDivider(),
+
+                _buildSectionTitle(Icons.featured_play_list, 'Facilities'),
+                const SizedBox(height: 8),
+                _buildCheckboxes(
+                  {
+                    'Room Service': _guestHouseRoomService,
+                    'Parking': _guestHouseParking,
+                    'Power Backup': _guestHousePowerBackup,
+                  },
+                  (key, val) {
+                    setState(() {
+                      if (key == 'Room Service') _guestHouseRoomService = val;
+                      if (key == 'Parking') _guestHouseParking = val;
+                      if (key == 'Power Backup') _guestHousePowerBackup = val;
+                    });
+                  },
+                ),
+                _buildDivider(),
+
+                _buildSectionTitle(Icons.people, 'Preferences'),
+                const SizedBox(height: 8),
+                _buildDropdown(
+                  'Suitable For',
+                  _guestHousePreference,
+                  _guestHousePreferences,
+                  (val) {
+                    setState(() => _guestHousePreference = val!);
+                  },
+                ),
+                _buildDivider(),
+
+                _buildSectionTitle(Icons.calendar_today, 'Available From'),
+                const SizedBox(height: 8),
+                _buildTextField(
+                  _guestHouseAvailableFromController,
+                  'Select date',
+                  '',
+                  TextInputType.datetime,
+                ),
+                _buildDivider(),
+              ],
+            ),
+          ),
+        ];
+
+      case 'Farm House':
+        return [
+          FadeInSlide(
+            delay: 0.15,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildSectionTitle(Icons.landscape, 'Farm House Details'),
+                const SizedBox(height: 8),
+
+                _buildTextField(
+                  TextEditingController(text: _farmLandSize.toString())
+                    ..addListener(() {
+                      _farmLandSize =
+                          double.tryParse(
+                            TextEditingController(
+                              text: _farmLandSize.toString(),
+                            ).text,
+                          ) ??
+                          0;
+                    }),
+                  'Land Size (acres/kanals)',
+                  '',
+                  TextInputType.number,
+                ),
+                _buildDivider(),
+
+                _buildSectionTitle(Icons.grass, 'Property Features'),
+                const SizedBox(height: 8),
+                _buildCheckboxes(
+                  {
+                    'Lawn / Garden': _farmLawn || _farmGarden,
+                    'Rooms / Hall': _farmRooms || _farmHall,
+                    'Swimming Pool': _farmSwimmingPool,
+                  },
+                  (key, val) {
+                    setState(() {
+                      if (key == 'Lawn / Garden') {
+                        _farmLawn = val;
+                        _farmGarden = val;
+                      }
+                      if (key == 'Rooms / Hall') {
+                        _farmRooms = val;
+                        _farmHall = val;
+                      }
+                      if (key == 'Swimming Pool') _farmSwimmingPool = val;
+                    });
+                  },
+                ),
+                _buildDivider(),
+
+                _buildSectionTitle(Icons.featured_play_list, 'Facilities'),
+                const SizedBox(height: 8),
+                _buildCheckboxes(
+                  {
+                    'Parking': _farmParking,
+                    'Electricity': _farmElectricity,
+                    'Water Supply': _farmWaterSupply,
+                  },
+                  (key, val) {
+                    setState(() {
+                      if (key == 'Parking') _farmParking = val;
+                      if (key == 'Electricity') _farmElectricity = val;
+                      if (key == 'Water Supply') _farmWaterSupply = val;
+                    });
+                  },
+                ),
+                _buildDivider(),
+
+                _buildSectionTitle(Icons.celebration, 'Suitable For'),
+                const SizedBox(height: 8),
+                _buildDropdown(
+                  'Purpose',
+                  _farmSuitableFor,
+                  _farmSuitableOptions,
+                  (val) {
+                    setState(() => _farmSuitableFor = val!);
+                  },
+                ),
+                _buildDivider(),
+
+                _buildSectionTitle(Icons.calendar_today, 'Available From'),
+                const SizedBox(height: 8),
+                _buildTextField(
+                  _farmAvailableFromController,
+                  'Select date',
+                  '',
+                  TextInputType.datetime,
+                ),
+                _buildDivider(),
+              ],
+            ),
+          ),
+        ];
+
       default:
         return [];
     }
@@ -562,17 +1649,17 @@ class _AddViewState extends State<AddView> {
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? AppColors.primary.withOpacity(0.1)
+                    ? AppColors.primary.withValues(alpha: 0.1)
                     : Colors.transparent,
                 border: Border.all(
-                  color: isSelected ? AppColors.primary : AppColors.borderLight,
+                  color: isSelected ? AppColors.primary : Theme.of(context).colorScheme.outline.withValues(alpha: 0.5),
                   width: isSelected ? 2 : 1,
                 ),
                 borderRadius: BorderRadius.circular(25),
                 boxShadow: isSelected
                     ? [
                         BoxShadow(
-                          color: AppColors.primary.withOpacity(0.2),
+                          color: AppColors.primary.withValues(alpha: 0.2),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -582,7 +1669,7 @@ class _AddViewState extends State<AddView> {
               child: Text(
                 type,
                 style: TextStyle(
-                  color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                  color: isSelected ? AppColors.primary : Theme.of(context).colorScheme.onSurface,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 ),
               ),
@@ -594,6 +1681,7 @@ class _AddViewState extends State<AddView> {
   }
 
   Widget _buildBedsGrid() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Wrap(
       spacing: 12,
       runSpacing: 12,
@@ -618,12 +1706,12 @@ class _AddViewState extends State<AddView> {
                       end: Alignment.bottomRight,
                     )
                   : null,
-              color: isSelected ? null : Colors.grey.shade200,
+              color: isSelected ? null : colorScheme.surfaceContainerHighest,
               shape: BoxShape.circle,
               boxShadow: isSelected
                   ? [
                       BoxShadow(
-                        color: AppColors.primary.withOpacity(0.4),
+                        color: AppColors.primary.withValues(alpha: 0.4),
                         blurRadius: 8,
                         offset: const Offset(0, 3),
                       ),
@@ -634,7 +1722,7 @@ class _AddViewState extends State<AddView> {
               child: Text(
                 '$bedNum',
                 style: TextStyle(
-                  color: isSelected ? Colors.white : AppColors.textPrimary,
+                  color: isSelected ? Colors.white : colorScheme.onSurface,
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
                 ),
@@ -648,101 +1736,264 @@ class _AddViewState extends State<AddView> {
 
   // Compact Slider widget for number selection
   Widget _buildSlider(
+    String label,
     int value,
     int min,
     int max,
     ValueChanged<int> onChanged,
   ) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.borderLight),
-      ),
-      child: Row(
-        children: [
-          // Current value display
-          Container(
-            width: 45,
-            height: 45,
-            decoration: BoxDecoration(
-              color: AppColors.primary,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Center(
-              child: Text(
-                '$value',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 45,
+                height: 45,
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Center(
+                  child: Text(
+                    '$value',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          // Slider
-          Expanded(
-            child: SliderTheme(
-              data: SliderThemeData(
-                activeTrackColor: AppColors.primary,
-                inactiveTrackColor: AppColors.primary.withOpacity(0.2),
-                thumbColor: AppColors.primary,
-                overlayColor: AppColors.primary.withOpacity(0.1),
-                trackHeight: 6,
-                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10),
+              const SizedBox(width: 12),
+              Expanded(
+                child: SliderTheme(
+                  data: SliderThemeData(
+                    activeTrackColor: AppColors.primary,
+                    inactiveTrackColor: AppColors.primary.withValues(
+                      alpha: 0.2,
+                    ),
+                    thumbColor: AppColors.primary,
+                    overlayColor: AppColors.primary.withValues(alpha: 0.1),
+                    trackHeight: 6,
+                    thumbShape: const RoundSliderThumbShape(
+                      enabledThumbRadius: 10,
+                    ),
+                  ),
+                  child: Slider(
+                    value: value.toDouble(),
+                    min: min.toDouble(),
+                    max: max.toDouble(),
+                    divisions: max - min <= 0 ? 1 : max - min,
+                    onChanged: (val) => onChanged(val.toInt()),
+                  ),
+                ),
               ),
-              child: Slider(
-                value: value.toDouble(),
-                min: min.toDouble(),
-                max: max.toDouble(),
-                divisions: max - min <= 0 ? 1 : max - min,
-                onChanged: (val) => onChanged(val.toInt()),
+              Text(
+                '$min-$max',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                  fontSize: 12,
+                ),
               ),
-            ),
+            ],
           ),
-          // Range labels
-          Text(
-            '$min-$max',
-            style: TextStyle(color: AppColors.hintText, fontSize: 12),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   Widget _buildDropdown(
+    String label,
     String value,
     List<String> items,
     ValueChanged<String?> onChanged,
   ) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.borderLight),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: value,
-          isExpanded: true,
-          icon: _gradientIcon(
-            Icons.keyboard_arrow_down,
-            color1: AppColors.primary,
-            color2: Colors.black,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
           ),
-          items: items.map((item) {
-            return DropdownMenuItem(value: item, child: Text(item));
-          }).toList(),
-          onChanged: onChanged,
         ),
-      ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3)),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: value,
+              isExpanded: true,
+              icon: _gradientIcon(
+                Icons.keyboard_arrow_down,
+                color1: AppColors.primary,
+                color2: Colors.black,
+              ),
+              items: items.map((item) {
+                return DropdownMenuItem(value: item, child: Text(item));
+              }).toList(),
+              onChanged: onChanged,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCheckboxes(
+    Map<String, bool> items,
+    Function(String, bool) onChanged,
+  ) {
+    return Wrap(
+      spacing: 12,
+      runSpacing: 12,
+      children: items.keys.map((key) {
+        final isSelected = items[key]!;
+        return GestureDetector(
+          onTap: () => onChanged(key, !isSelected),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? AppColors.primary.withValues(alpha: 0.1)
+                  : Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isSelected ? AppColors.primary : Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+                width: isSelected ? 1.5 : 1,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  isSelected ? Icons.check_box : Icons.check_box_outline_blank,
+                  size: 20,
+                  color: isSelected ? AppColors.primary : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  key,
+                  style: TextStyle(
+                    color: isSelected
+                        ? AppColors.primary
+                        : Theme.of(context).colorScheme.onSurface,
+                    fontSize: 14,
+                    fontWeight: isSelected
+                        ? FontWeight.bold
+                        : FontWeight.normal,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildModernRentSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle(Icons.payments, 'Rent & Financials'),
+        const SizedBox(height: 12),
+        _buildTextField(
+          _rentController,
+          _selectedPropertyType == 'Hostel'
+              ? 'Monthly rent (per bed)'
+              : 'Monthly rent',
+          'Required',
+          TextInputType.number,
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _buildTextField(
+                _advanceController,
+                'Advance amount',
+                'Required',
+                TextInputType.number,
+              ),
+            ),
+            if (_selectedPropertyType == 'Flat' ||
+                _selectedPropertyType == 'Office') ...[
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildTextField(
+                  _maintenanceController,
+                  'Maintenance charges',
+                  'Required',
+                  TextInputType.number,
+                ),
+              ),
+            ],
+            if (_selectedPropertyType == 'Hostel' ||
+                _selectedPropertyType == 'House') ...[
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildTextField(
+                  _securityController,
+                  'Security / Advance',
+                  'Required',
+                  TextInputType.number,
+                ),
+              ),
+            ],
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Text(
+              'Negotiable',
+              style: TextStyle(fontSize: 16, color: Theme.of(context).colorScheme.onSurface),
+            ),
+            const Spacer(),
+            Switch(
+              value: _isNegotiable,
+              activeTrackColor: AppColors.primary,
+              onChanged: (val) => setState(() => _isNegotiable = val),
+            ),
+            Text(
+              _isNegotiable ? '✔️' : '❌',
+              style: TextStyle(fontSize: 18, color: Theme.of(context).colorScheme.onSurface),
+            ),
+          ],
+        ),
+        _buildDivider(),
+      ],
     );
   }
 
   Widget _buildAreaSizeField() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Row(
       children: [
         Expanded(
@@ -750,16 +2001,16 @@ class _AddViewState extends State<AddView> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
-              color: Colors.grey.shade50,
+              color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.borderLight),
+              border: Border.all(color: colorScheme.outline.withValues(alpha: 0.3)),
             ),
             child: TextFormField(
               controller: _areaController,
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
                 hintText: 'Enter',
-                hintStyle: TextStyle(color: AppColors.hintText),
+                hintStyle: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.5)),
                 border: InputBorder.none,
               ),
             ),
@@ -770,9 +2021,9 @@ class _AddViewState extends State<AddView> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             decoration: BoxDecoration(
-              color: Colors.grey.shade50,
+              color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.borderLight),
+              border: Border.all(color: colorScheme.outline.withValues(alpha: 0.3)),
             ),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(
@@ -786,7 +2037,7 @@ class _AddViewState extends State<AddView> {
                 items: _areaUnits.map((unit) {
                   return DropdownMenuItem(
                     value: unit,
-                    child: Text(unit, style: const TextStyle(fontSize: 14)),
+                    child: Text(unit, style: TextStyle(fontSize: 14, color: colorScheme.onSurface)),
                   );
                 }).toList(),
                 onChanged: (val) {
@@ -801,6 +2052,7 @@ class _AddViewState extends State<AddView> {
   }
 
   Widget _buildCitySelector() {
+    final colorScheme = Theme.of(context).colorScheme;
     return InkWell(
       onTap: () {
         // TODO: Open city selection
@@ -808,14 +2060,14 @@ class _AddViewState extends State<AddView> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
         decoration: BoxDecoration(
-          color: Colors.grey.shade50,
+          color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.borderLight),
+          border: Border.all(color: colorScheme.outline.withValues(alpha: 0.3)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(_selectedCity, style: const TextStyle(fontSize: 16)),
+            Text(_selectedCity, style: TextStyle(fontSize: 16, color: colorScheme.onSurface)),
             _gradientIcon(
               Icons.chevron_right,
               color1: AppColors.primary,
@@ -828,6 +2080,7 @@ class _AddViewState extends State<AddView> {
   }
 
   Widget _buildLocationSelector() {
+    final colorScheme = Theme.of(context).colorScheme;
     return InkWell(
       onTap: () {
         // TODO: Open location selection
@@ -835,16 +2088,16 @@ class _AddViewState extends State<AddView> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
         decoration: BoxDecoration(
-          color: Colors.grey.shade50,
+          color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.borderLight),
+          border: Border.all(color: colorScheme.outline.withValues(alpha: 0.3)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
               'Select Location',
-              style: TextStyle(color: AppColors.hintText, fontSize: 16),
+              style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 16),
             ),
             _gradientIcon(
               Icons.chevron_right,
@@ -857,13 +2110,15 @@ class _AddViewState extends State<AddView> {
     );
   }
 
+  // ignore: unused_element - rent field builder (kept for future Rent section)
   Widget _buildRentField() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.borderLight),
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
@@ -873,7 +2128,7 @@ class _AddViewState extends State<AddView> {
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
                 hintText: '0.00',
-                hintStyle: TextStyle(color: AppColors.hintText),
+                hintStyle: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.5)),
                 border: InputBorder.none,
                 errorStyle: const TextStyle(color: AppColors.primary),
               ),
@@ -888,7 +2143,7 @@ class _AddViewState extends State<AddView> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
+              color: AppColors.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Text(
@@ -911,19 +2166,20 @@ class _AddViewState extends State<AddView> {
     String errorText, [
     TextInputType? keyboardType,
   ]) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.borderLight),
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.3)),
       ),
       child: TextFormField(
         controller: controller,
         keyboardType: keyboardType,
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: TextStyle(color: AppColors.hintText),
+          hintStyle: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.5)),
           border: InputBorder.none,
           errorStyle: const TextStyle(color: AppColors.primary),
         ),
@@ -938,19 +2194,20 @@ class _AddViewState extends State<AddView> {
   }
 
   Widget _buildDescriptionField() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.borderLight),
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.3)),
       ),
       child: TextFormField(
         controller: _descriptionController,
         maxLines: 4,
         decoration: InputDecoration(
           hintText: 'Enter description',
-          hintStyle: TextStyle(color: AppColors.hintText),
+          hintStyle: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.5)),
           border: InputBorder.none,
           errorStyle: const TextStyle(color: AppColors.primary),
         ),
@@ -960,59 +2217,6 @@ class _AddViewState extends State<AddView> {
           }
           return null;
         },
-      ),
-    );
-  }
-
-  Widget _buildPhoneField() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.borderLight),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _gradientIcon(
-                  Icons.arrow_drop_down,
-                  color1: AppColors.primary,
-                  color2: Colors.black,
-                ),
-                const Text('🇵🇰', style: TextStyle(fontSize: 18)),
-                const SizedBox(width: 4),
-                const Text(
-                  '+92',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-          ),
-          Container(width: 1, height: 30, color: AppColors.borderLight),
-          Expanded(
-            child: TextFormField(
-              controller: _phoneController,
-              keyboardType: TextInputType.phone,
-              maxLength: 10,
-              decoration: InputDecoration(
-                hintText: 'Phone Number',
-                hintStyle: TextStyle(color: AppColors.hintText),
-                counterText: '',
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-              ),
-            ),
-          ),
-          Text(
-            '${_phoneController.text.length}/10',
-            style: TextStyle(color: AppColors.hintText, fontSize: 12),
-          ),
-        ],
       ),
     );
   }
@@ -1039,7 +2243,7 @@ class _AddViewState extends State<AddView> {
         // Dotted border container with centered buttons
         CustomPaint(
           painter: _DottedBorderPainter(
-            color: AppColors.primary.withOpacity(0.6),
+            color: AppColors.primary.withValues(alpha: 0.6),
             strokeWidth: 2,
             gap: 6,
           ),
@@ -1049,13 +2253,9 @@ class _AddViewState extends State<AddView> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _buildUploadButton(Icons.image, 'From Gallery', () {
-                  // TODO: Pick from gallery
-                }),
+                _buildUploadButton(Icons.image, 'Gallery', _pickFromGallery),
                 const SizedBox(height: 16),
-                _buildUploadButton(Icons.camera_alt, 'From Camera', () {
-                  // TODO: Pick from camera
-                }),
+                _buildUploadButton(Icons.camera_alt, 'Camera', _pickFromCamera),
               ],
             ),
           ),
@@ -1078,7 +2278,10 @@ class _AddViewState extends State<AddView> {
         Expanded(
           child: Text(
             text,
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+              fontSize: 14,
+            ),
           ),
         ),
       ],
@@ -1095,13 +2298,16 @@ class _AddViewState extends State<AddView> {
           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [AppColors.primary.withOpacity(0.1), Colors.white],
+              colors: [
+              AppColors.primary.withValues(alpha: 0.1),
+              Theme.of(context).colorScheme.surface,
+            ],
             ),
             border: Border.all(color: AppColors.primary, width: 2),
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
-                color: AppColors.primary.withOpacity(0.15),
+                color: AppColors.primary.withValues(alpha: 0.15),
                 blurRadius: 8,
                 offset: const Offset(0, 3),
               ),
@@ -1131,6 +2337,56 @@ class _AddViewState extends State<AddView> {
     );
   }
 
+  Widget _buildSelectedImagesRow() {
+    if (_selectedImages.isEmpty) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle(Icons.collections, 'Selected Images'),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 72,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: _selectedImages.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            itemBuilder: (context, index) {
+              final path = _selectedImages[index];
+              return Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: (path.startsWith('assets/')
+                        ? Image.asset(path, width: 72, height: 72, fit: BoxFit.cover)
+                        : Image.file(File(path), width: 72, height: 72, fit: BoxFit.cover)),
+                  ),
+                  Positioned(
+                    top: -6,
+                    right: -6,
+                    child: GestureDetector(
+                      onTap: () => _removeImageAt(index),
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.6),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.close, size: 14, color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 16),
+        _buildDivider(),
+      ],
+    );
+  }
+
   // Save button - same style as other buttons in project (solid red)
   Widget _buildSaveButton() {
     return SizedBox(
@@ -1138,15 +2394,25 @@ class _AddViewState extends State<AddView> {
       height: 56,
       child: ElevatedButton(
         onPressed: () {
-          if (_formKey.currentState!.validate()) {
-            // Handle save
+          if (!_formKey.currentState!.validate()) return;
+          if (_selectedImages.isEmpty) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Ad posted successfully!'),
-                backgroundColor: AppColors.primary,
+              SnackBar(
+                content: const Text('Please add at least 1 image (Camera or Gallery)'),
+                backgroundColor: Colors.orange,
+                behavior: SnackBarBehavior.floating,
               ),
             );
+            return;
           }
+          // TODO: upload _selectedImages and form data to backend
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Ad posted successfully!'),
+              backgroundColor: AppColors.primary,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
@@ -1189,7 +2455,7 @@ class _HeaderCurvePainter extends CustomPainter {
 
     // Draw subtle circle decoration
     final circlePaint = Paint()
-      ..color = Colors.white.withOpacity(0.15)
+      ..color = Colors.white.withValues(alpha: 0.15)
       ..style = PaintingStyle.fill;
 
     canvas.drawCircle(

@@ -15,4 +15,11 @@ class AppImages {
   static const String one = '$_base/1.png';
   static const String img1 = '$_base/img1.jpg';
   static const String img2 = '$_base/img2.jpg';
+
+  static const String faisalabad = '$_base/faisalabad.jpg';
+  static const String islamabad = '$_base/islamabad.jpg';
+  static const String karachi = '$_base/karachi.jpg';
+  static const String lahore = '$_base/lahore.jpg';
+  static const String multan = '$_base/multan.jpg';
+  static const String peshawar = '$_base/peshawar.jpg';
 }

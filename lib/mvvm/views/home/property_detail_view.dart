@@ -97,8 +97,9 @@ class _PropertyDetailViewState extends State<PropertyDetailView> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: colorScheme.surface,
       body: Stack(
         children: [
           Positioned.fill(
@@ -173,7 +174,7 @@ class _PropertyDetailViewState extends State<PropertyDetailView> {
                                 child: Container(
                                   padding: const EdgeInsets.all(10),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.9),
+                                    color: Colors.white.withValues(alpha: 0.9),
                                     borderRadius: BorderRadius.circular(12),
                                     boxShadow: [
                                       BoxShadow(
@@ -195,7 +196,7 @@ class _PropertyDetailViewState extends State<PropertyDetailView> {
                                 child: Container(
                                   padding: const EdgeInsets.all(10),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.9),
+                                    color: Colors.white.withValues(alpha: 0.9),
                                     shape: BoxShape.circle,
                                     boxShadow: [
                                       BoxShadow(
@@ -224,7 +225,7 @@ class _PropertyDetailViewState extends State<PropertyDetailView> {
                               vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.6),
+                              color: Colors.black.withValues(alpha: 0.6),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
@@ -265,27 +266,27 @@ class _PropertyDetailViewState extends State<PropertyDetailView> {
                                       children: [
                                         Text(
                                           title,
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontSize: 24,
                                             fontWeight: FontWeight.bold,
-                                            color: AppColors.textPrimary,
+                                            color: colorScheme.onSurface,
                                             height: 1.2,
                                           ),
                                         ),
                                         const SizedBox(height: 8),
                                         Row(
                                           children: [
-                                            const Icon(
+                                            Icon(
                                               Icons.location_on_outlined,
                                               size: 18,
-                                              color: AppColors.textSecondary,
+                                              color: colorScheme.onSurface.withValues(alpha: 0.7),
                                             ),
                                             const SizedBox(width: 4),
                                             Text(
                                               '$location, $subLocation',
-                                              style: const TextStyle(
+                                              style: TextStyle(
                                                 fontSize: 15,
-                                                color: AppColors.textSecondary,
+                                                color: colorScheme.onSurface.withValues(alpha: 0.7),
                                               ),
                                             ),
                                           ],
@@ -299,7 +300,7 @@ class _PropertyDetailViewState extends State<PropertyDetailView> {
                                       vertical: 8,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: AppColors.primary.withOpacity(0.1),
+                                      color: AppColors.primary.withValues(alpha: 0.1),
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Text(
@@ -356,9 +357,9 @@ class _PropertyDetailViewState extends State<PropertyDetailView> {
                           child: Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: colorScheme.surfaceContainerHighest,
                               borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: Colors.grey.shade200),
+                              border: Border.all(color: colorScheme.outline.withValues(alpha: 0.2)),
                               boxShadow: const [
                                 BoxShadow(
                                   color: Colors.black12,
@@ -370,12 +371,12 @@ class _PropertyDetailViewState extends State<PropertyDetailView> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
+                                Text(
                                   'Ad Posted By',
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
-                                    color: AppColors.textPrimary,
+                                    color: colorScheme.onSurface,
                                   ),
                                 ),
                                 const SizedBox(height: 16),
@@ -386,7 +387,7 @@ class _PropertyDetailViewState extends State<PropertyDetailView> {
                                       height: 60,
                                       decoration: BoxDecoration(
                                         shape: BoxShape.circle,
-                                        color: Colors.grey.shade200,
+                                        color: colorScheme.surfaceContainerHighest,
                                         image: const DecorationImage(
                                           image: AssetImage(AppImages.one),
                                           fit: BoxFit.cover,
@@ -399,12 +400,12 @@ class _PropertyDetailViewState extends State<PropertyDetailView> {
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
-                                          const Text(
+                                          Text(
                                             'M Atif Rehman',
                                             style: TextStyle(
                                               fontSize: 18,
                                               fontWeight: FontWeight.bold,
-                                              color: AppColors.textPrimary,
+                                              color: colorScheme.onSurface,
                                             ),
                                           ),
                                           const SizedBox(height: 4),
@@ -420,7 +421,7 @@ class _PropertyDetailViewState extends State<PropertyDetailView> {
                                                 'Islamabad',
                                                 style: TextStyle(
                                                   fontSize: 14,
-                                                  color: Colors.grey.shade600,
+                                                  color: colorScheme.onSurface.withValues(alpha: 0.7),
                                                 ),
                                               ),
                                             ],
@@ -489,12 +490,12 @@ class _PropertyDetailViewState extends State<PropertyDetailView> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
+                              Text(
                                 'Description',
                                 style: TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.textPrimary,
+                                  color: colorScheme.onSurface,
                                 ),
                               ),
                               const SizedBox(height: 12),
@@ -503,7 +504,7 @@ class _PropertyDetailViewState extends State<PropertyDetailView> {
                                 style: TextStyle(
                                   fontSize: 16,
                                   height: 1.6,
-                                  color: Colors.grey.shade600,
+                                  color: colorScheme.onSurface.withValues(alpha: 0.7),
                                 ),
                               ),
                               // View Full Description
@@ -533,12 +534,12 @@ class _PropertyDetailViewState extends State<PropertyDetailView> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
+                              Text(
                                 'View on Location',
                                 style: TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.textPrimary,
+                                  color: colorScheme.onSurface,
                                 ),
                               ),
                               const SizedBox(height: 16),
@@ -546,7 +547,7 @@ class _PropertyDetailViewState extends State<PropertyDetailView> {
                                 height: 180,
                                 width: double.infinity,
                                 decoration: BoxDecoration(
-                                  color: Colors.grey.shade100,
+                                  color: colorScheme.surfaceContainerHighest,
                                   borderRadius: BorderRadius.circular(20),
                                   image: const DecorationImage(
                                     image: AssetImage(AppImages.img1),
@@ -585,12 +586,12 @@ class _PropertyDetailViewState extends State<PropertyDetailView> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
+                              Text(
                                 'Recommended Properties',
                                 style: TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.textPrimary,
+                                  color: colorScheme.onSurface,
                                 ),
                               ),
                               const SizedBox(height: 16),
@@ -638,7 +639,7 @@ class _PropertyDetailViewState extends State<PropertyDetailView> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Colors.transparent,
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(32),
                 ),
@@ -677,7 +678,7 @@ class _PropertyDetailViewState extends State<PropertyDetailView> {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withOpacity(0.3),
+              color: AppColors.primary.withValues(alpha: 0.3),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
@@ -710,22 +711,23 @@ class _PropertyDetailViewState extends State<PropertyDetailView> {
   }
 
   Widget _buildFeatureChip(IconData icon, String label) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F5F5),
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 20, color: Colors.grey.shade700),
+          Icon(icon, size: 20, color: colorScheme.onSurface.withValues(alpha: 0.7)),
           const SizedBox(width: 8),
           Text(
             label,
             style: TextStyle(
               fontWeight: FontWeight.w600,
-              color: Colors.grey.shade800,
+              color: colorScheme.onSurface.withValues(alpha: 0.9),
             ),
           ),
         ],
@@ -757,11 +759,12 @@ class _ReportAdSheetState extends State<ReportAdSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       height: MediaQuery.of(context).size.height * 0.96,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         children: [
@@ -811,7 +814,7 @@ class _ReportAdSheetState extends State<ReportAdSheet> {
                 Text(
                   'This won\'t be shared with the advertiser.',
                   style: TextStyle(
-                    color: Colors.grey.shade600,
+                    color: colorScheme.onSurface.withValues(alpha: 0.7),
                     fontSize: 13,
                   ),
                 ),
@@ -827,41 +830,43 @@ class _ReportAdSheetState extends State<ReportAdSheet> {
                     activeColor: AppColors.primary,
                     title: Text(
                       reasons[index],
-                      style: const TextStyle(fontSize: 15),
+                      style: TextStyle(fontSize: 15, color: colorScheme.onSurface),
                     ),
                   );
                 }),
                 const SizedBox(height: 8),
                 Container(
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade50,
+                    color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.grey.shade200),
+                    border: Border.all(color: colorScheme.outline.withValues(alpha: 0.3)),
                   ),
                   child: TextField(
                     controller: _detailsController,
                     maxLines: 4,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       hintText: 'Issue details',
+                      hintStyle: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.5)),
                       border: InputBorder.none,
-                      contentPadding: EdgeInsets.all(12),
+                      contentPadding: const EdgeInsets.all(12),
                     ),
                   ),
                 ),
                 const SizedBox(height: 12),
                 Container(
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade50,
+                    color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.grey.shade200),
+                    border: Border.all(color: colorScheme.outline.withValues(alpha: 0.3)),
                   ),
                   child: TextField(
                     controller: _contactController,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       hintText: 'Your contact (email or phone)',
+                      hintStyle: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.5)),
                       border: InputBorder.none,
                       contentPadding:
-                          EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                          const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
                     ),
                   ),
                 ),
@@ -932,11 +937,12 @@ class FullDetailsSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       height: MediaQuery.of(context).size.height * 0.85,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         children: [
@@ -992,17 +998,18 @@ class FullDetailsSheet extends StatelessWidget {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.1),
+                        color: AppColors.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(Icons.home, color: Colors.brown),
+                      child: Icon(Icons.home, color: colorScheme.primary),
                     ),
                     const SizedBox(width: 12),
                     Text(
                       title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
                       ),
                     ),
                   ],
@@ -1010,28 +1017,36 @@ class FullDetailsSheet extends StatelessWidget {
                 const SizedBox(height: 12),
                 Text(
                   'This is very beautiful house.',
-                  style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: colorScheme.onSurface.withValues(alpha: 0.7),
+                  ),
                 ),
                 const SizedBox(height: 24),
-                const Text(
+                Text(
                   'Features',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.onSurface,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Wrap(
                   spacing: 12,
                   runSpacing: 12,
                   children: [
-                    _buildFeatureChip(Icons.home_work_outlined, 'Portions', 'Full'),
-                    _buildFeatureChip(Icons.bathtub_outlined, 'Baths', '$bathrooms'),
+                    _buildFeatureChip(context, Icons.home_work_outlined, 'Portions', 'Full'),
+                    _buildFeatureChip(context, Icons.bathtub_outlined, 'Baths', '$bathrooms'),
                     _buildFeatureChip(
+                      context,
                       Icons.meeting_room_outlined,
                       'Rooms',
                       '${bedrooms + 1}',
                     ),
-                    _buildFeatureChip(Icons.kitchen_outlined, 'Kitchen', '2'),
-                    _buildFeatureChip(Icons.tv, 'TV Lounge', '2'),
-                    _buildFeatureChip(Icons.square_foot, 'Area', 'Marla (10)'),
+                    _buildFeatureChip(context, Icons.kitchen_outlined, 'Kitchen', '2'),
+                    _buildFeatureChip(context, Icons.tv, 'TV Lounge', '2'),
+                    _buildFeatureChip(context, Icons.square_foot, 'Area', 'Marla (10)'),
                   ],
                 ),
               ],
@@ -1042,24 +1057,25 @@ class FullDetailsSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildFeatureChip(IconData icon, String label, String value) {
+  Widget _buildFeatureChip(BuildContext context, IconData icon, String label, String value) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.2)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 18, color: Colors.grey.shade700),
+          Icon(icon, size: 18, color: colorScheme.onSurface.withValues(alpha: 0.7)),
           const SizedBox(width: 8),
           Text(
             '$label: $value',
             style: TextStyle(
               fontSize: 14,
-              color: Colors.grey.shade800,
+              color: colorScheme.onSurface.withValues(alpha: 0.9),
               fontWeight: FontWeight.w600,
             ),
           ),

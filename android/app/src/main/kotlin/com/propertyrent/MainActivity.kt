@@ -1,4 +1,4 @@
-package com.example.propertyrent
+package com.propertyrent
 
 import io.flutter.embedding.android.FlutterActivity
 
