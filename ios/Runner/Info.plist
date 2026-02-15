@@ -49,5 +49,16 @@
 	<string>Property Rent needs camera access to take photos for your ad.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Property Rent needs gallery access to pick photos for your ad.</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.840735247188-ji4qp0vckubq7ks2j0tpvllvvu15bgl4</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

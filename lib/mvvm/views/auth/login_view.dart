@@ -1,22 +1,87 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:propertyrent/core/app_color/app_colors.dart';
 import 'package:propertyrent/core/constants/app_images.dart';
+import 'package:propertyrent/core/animations/fade_in_slide.dart';
+import 'package:propertyrent/mvvm/viewmodels/auth_viewmodel.dart';
 import 'package:propertyrent/mvvm/views/auth/signup_view.dart';
 import 'package:propertyrent/mvvm/views/auth/forgot_password_view.dart';
-import 'package:propertyrent/core/animations/fade_in_slide.dart';
 
-class LoginView extends StatefulWidget {
+class LoginView extends ConsumerStatefulWidget {
   const LoginView({super.key});
 
   @override
-  State<LoginView> createState() => _LoginViewState();
+  ConsumerState<LoginView> createState() => _LoginViewState();
 }
 
-class _LoginViewState extends State<LoginView> {
+class _LoginViewState extends ConsumerState<LoginView> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _isGoogleLoading = false;
+
+  Future<void> _handleGoogleSignIn(BuildContext context) async {
+    setState(() => _isGoogleLoading = true);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Logging in with Google...'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+    try {
+      final repo = ref.read(authRepositoryProvider);
+      final user = await repo.signInWithGoogle();
+      if (!context.mounted) return;
+      if (user != null) {
+        ref.invalidate(authStateProvider);
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Welcome, ${user.displayLabel}!'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        await Future.delayed(const Duration(milliseconds: 100));
+        if (!context.mounted) return;
+        Navigator.of(context).pop(true);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Sign in cancelled')),
+        );
+      }
+    } on PlatformException catch (e, st) {
+      debugPrint('Google sign in error: $e\n$st');
+      if (!context.mounted) return;
+      final isSha1Error = e.code == 'sign_in_failed' &&
+          (e.message ?? '').contains('ApiException: 10');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            isSha1Error
+                ? 'Add SHA-1 in Firebase Console (Project Settings → Android app → Add fingerprint). Debug SHA-1: 86:79:C0:84:1C:1C:37:6E:29:5F:07:42:C7:71:FB:CA:B6:AF:37:D5'
+                : 'Login failed: ${e.message ?? e.code}',
+          ),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 8),
+        ),
+      );
+    } catch (e, st) {
+      debugPrint('Google sign in error: $e\n$st');
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Login failed: ${e.toString()}'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isGoogleLoading = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -312,9 +377,7 @@ class _LoginViewState extends State<LoginView> {
                         width: double.infinity,
                         height: 56,
                         child: OutlinedButton(
-                          onPressed: () {
-                            // Handle Google sign in
-                          },
+                          onPressed: _isGoogleLoading ? null : () => _handleGoogleSignIn(context),
                           style: OutlinedButton.styleFrom(
                             side: BorderSide(
                               color: Colors.grey.shade300,
@@ -324,38 +387,47 @@ class _LoginViewState extends State<LoginView> {
                               borderRadius: BorderRadius.circular(32),
                             ),
                           ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              ShaderMask(
-                                shaderCallback: (bounds) =>
-                                    const LinearGradient(
-                                      colors: [
-                                        Colors.red,
-                                        Colors.orange,
-                                        Colors.green,
-                                        Colors.blue,
-                                      ],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    ).createShader(bounds),
-                                child: const Icon(
-                                  Icons.g_mobiledata,
-                                  color: Colors.white,
-                                  size: 32,
+                          child: _isGoogleLoading
+                              ? SizedBox(
+                                  height: 24,
+                                  width: 24,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: colorScheme.primary,
+                                  ),
+                                )
+                              : Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    ShaderMask(
+                                      shaderCallback: (bounds) =>
+                                          const LinearGradient(
+                                            colors: [
+                                              Colors.red,
+                                              Colors.orange,
+                                              Colors.green,
+                                              Colors.blue,
+                                            ],
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                          ).createShader(bounds),
+                                      child: const Icon(
+                                        Icons.g_mobiledata,
+                                        color: Colors.white,
+                                        size: 32,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Text(
+                                      'Google',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: colorScheme.onSurface,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                              const SizedBox(width: 10),
-                              Text(
-                                'Google',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: colorScheme.onSurface,
-                                ),
-                              ),
-                            ],
-                          ),
                         ),
                       ),
                     ),

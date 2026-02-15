@@ -1,21 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:propertyrent/mvvm/views/home/category_listing_view.dart';
-import 'package:propertyrent/core/constants/app_images.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:propertyrent/core/app_color/app_colors.dart';
+import 'package:propertyrent/core/constants/app_images.dart';
 import 'package:propertyrent/core/animations/fade_in_slide.dart';
+import 'package:propertyrent/data/models/auth_user_model.dart';
+import 'package:propertyrent/mvvm/viewmodels/auth_viewmodel.dart';
+import 'package:propertyrent/mvvm/views/home/category_listing_view.dart';
 import 'package:propertyrent/mvvm/views/home/search_city_view.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 
-class HomeView extends StatefulWidget {
+class HomeView extends ConsumerStatefulWidget {
   final VoidCallback? onProfileTap;
 
   const HomeView({super.key, this.onProfileTap});
 
   @override
-  State<HomeView> createState() => _HomeViewState();
+  ConsumerState<HomeView> createState() => _HomeViewState();
 }
 
-class _HomeViewState extends State<HomeView> {
+class _HomeViewState extends ConsumerState<HomeView> {
   String _selectedCityName = 'Islamabad';
   String _selectedCityImage = AppImages.islamabad;
 
@@ -23,6 +26,7 @@ class _HomeViewState extends State<HomeView> {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final isSmallHeight = size.height < 700;
+    final user = ref.watch(authStateProvider).valueOrNull;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -30,7 +34,7 @@ class _HomeViewState extends State<HomeView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _buildHeader(context, size, widget.onProfileTap),
+            _buildHeader(context, size, widget.onProfileTap, user),
             SizedBox(height: isSmallHeight ? 12 : 16),
             _buildTitle(size),
             SizedBox(height: isSmallHeight ? 12 : 16),
@@ -47,6 +51,7 @@ class _HomeViewState extends State<HomeView> {
     BuildContext context,
     Size size,
     VoidCallback? onProfileTap,
+    AuthUser? user,
   ) {
     final headerHeight = size.height * 0.28;
     final searchHeight = size.height * 0.06;
@@ -110,7 +115,7 @@ class _HomeViewState extends State<HomeView> {
                           ),
                         ],
                       ),
-                      // Login button
+                      // User name + avatar (when logged in) or Login button
                       GestureDetector(
                         onTap: onProfileTap,
                         child: Container(
@@ -119,9 +124,7 @@ class _HomeViewState extends State<HomeView> {
                             vertical: 10,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(
-                              0xFFFF5252,
-                            ), // Red shade from screenshot
+                            color: const Color(0xFFFF5252),
                             borderRadius: BorderRadius.circular(30),
                             boxShadow: [
                               BoxShadow(
@@ -131,25 +134,33 @@ class _HomeViewState extends State<HomeView> {
                               ),
                             ],
                           ),
-                          child: const Row(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                'Login',
-                                style: TextStyle(
+                                user != null ? user.displayLabel : 'Login',
+                                style: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 15,
                                 ),
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
                               ),
-                              SizedBox(width: 10),
+                              const SizedBox(width: 10),
                               CircleAvatar(
                                 radius: 14,
                                 backgroundColor: Colors.white,
-                                child: Icon(
-                                  Icons.person,
-                                  color: Color(0xFFFF5252),
-                                  size: 18,
-                                ),
+                                backgroundImage: user != null && user.hasPhoto
+                                    ? NetworkImage(user.photoURL!)
+                                    : null,
+                                child: user == null || !user.hasPhoto
+                                    ? const Icon(
+                                        Icons.person,
+                                        color: Color(0xFFFF5252),
+                                        size: 18,
+                                      )
+                                    : null,
                               ),
                             ],
                           ),

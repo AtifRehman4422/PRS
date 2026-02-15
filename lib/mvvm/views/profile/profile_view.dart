@@ -4,6 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:propertyrent/core/app_color/app_colors.dart';
 import 'package:propertyrent/core/animations/fade_in_slide.dart';
 import 'package:propertyrent/core/theme/theme_provider.dart';
+import 'package:propertyrent/data/models/auth_user_model.dart';
+import 'package:propertyrent/mvvm/viewmodels/auth_viewmodel.dart';
 import 'package:propertyrent/mvvm/views/profile/my_profile_view.dart';
 import 'package:propertyrent/mvvm/views/profile/favorites_view.dart';
 import 'package:propertyrent/mvvm/views/profile/my_ads/my_ads_view.dart';
@@ -494,14 +496,16 @@ class ProfileView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final size = MediaQuery.of(context).size;
+    final authState = ref.watch(authStateProvider);
+    final user = authState.valueOrNull;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
-            // Header with curved background
-            _buildHeader(context, size),
+            // Header with curved background (shows user photo & name when logged in)
+            _buildHeader(context, size, user),
 
             // Menu Items
             Expanded(
@@ -510,32 +514,34 @@ class ProfileView extends ConsumerWidget {
                 child: Column(
                   children: [
                     const SizedBox(height: 24),
-                    FadeInSlide(
-                      delay: 0.1,
-                      child: _buildMenuItem(
-                        context,
-                        icon: Icons.person_outline,
-                        title: 'My Profile',
-                        subtitle: 'Edit personal details',
-                        color1: Colors.blue,
-                        color2: Colors.blue.shade800,
-                        onTap: () => _navigateToPage(context, const MyProfileView()),
+                    if (user != null) ...[
+                      FadeInSlide(
+                        delay: 0.1,
+                        child: _buildMenuItem(
+                          context,
+                          icon: Icons.person_outline,
+                          title: 'My Profile',
+                          subtitle: 'Edit personal details',
+                          color1: Colors.blue,
+                          color2: Colors.blue.shade800,
+                          onTap: () => _navigateToPage(context, const MyProfileView()),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    FadeInSlide(
-                      delay: 0.2,
-                      child: _buildMenuItem(
-                        context,
-                        icon: Icons.grid_view_rounded,
-                        title: 'My Ads',
-                        subtitle: 'Manage your properties',
-                        color1: AppColors.primary,
-                        color2: AppColors.primary.withValues(alpha: 0.8),
-                        onTap: () => _navigateToPage(context, const MyAdsView()),
+                      const SizedBox(height: 16),
+                      FadeInSlide(
+                        delay: 0.2,
+                        child: _buildMenuItem(
+                          context,
+                          icon: Icons.grid_view_rounded,
+                          title: 'My Ads',
+                          subtitle: 'Manage your properties',
+                          color1: AppColors.primary,
+                          color2: AppColors.primary.withValues(alpha: 0.8),
+                          onTap: () => _navigateToPage(context, const MyAdsView()),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
+                      const SizedBox(height: 16),
+                    ],
                     FadeInSlide(
                       delay: 0.3,
                       child: _buildMenuItem(
@@ -693,16 +699,22 @@ class ProfileView extends ConsumerWidget {
 
                     const SizedBox(height: 32),
 
-                    // Login Button
+                    // Login / Logout Button
                     FadeInSlide(
                       delay: 0.9,
                       child: SizedBox(
                         width: double.infinity,
                         height: 56,
                         child: ElevatedButton(
-                          onPressed: () => _showLoginSheet(context),
+                          onPressed: user != null
+                              ? () async {
+                                  await ref.read(authRepositoryProvider).signOut();
+                                }
+                              : () => _showLoginSheet(context),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
+                            backgroundColor: user != null
+                                ? Colors.grey.shade700
+                                : AppColors.primary,
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(32),
@@ -710,14 +722,17 @@ class ProfileView extends ConsumerWidget {
                             elevation: 4,
                             shadowColor: AppColors.primary.withValues(alpha: 0.4),
                           ),
-                          child: const Row(
+                          child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.login, size: 22),
-                              SizedBox(width: 10),
+                              Icon(
+                                user != null ? Icons.logout : Icons.login,
+                                size: 22,
+                              ),
+                              const SizedBox(width: 10),
                               Text(
-                                'Login',
-                                style: TextStyle(
+                                user != null ? 'Logout' : 'Login',
+                                style: const TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                   letterSpacing: 1,
@@ -740,7 +755,7 @@ class ProfileView extends ConsumerWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context, Size size) {
+  Widget _buildHeader(BuildContext context, Size size, AuthUser? user) {
     return Container(
       width: double.infinity,
       height: size.height * 0.28,
@@ -779,71 +794,102 @@ class ProfileView extends ConsumerWidget {
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
               child: Column(
-              children: [
-                const SizedBox(height: 10),
-                const FadeInSlide(
-                  delay: 0.0,
-                  child: Text(
-                    'Profile',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                children: [
+                  const SizedBox(height: 10),
+                  FadeInSlide(
+                    delay: 0.0,
+                    child: Text(
+                      user != null ? user.displayLabel : 'Profile',
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                      textAlign: TextAlign.center,
                     ),
                   ),
-                ),
-                const SizedBox(height: 20),
-                // Profile avatar
-                FadeInSlide(
-                  delay: 0.1,
-                  child: GestureDetector(
-                    onTap: () => _showLoginSheet(context),
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 3),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.2),
-                            blurRadius: 15,
-                          ),
-                        ],
-                      ),
-                      child: CircleAvatar(
-                        radius: 45,
-                        backgroundColor: Colors.white,
-                        child: _gradientIcon(Icons.person, size: 50),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                FadeInSlide(
-                  delay: 0.2,
-                  child: GestureDetector(
-                    onTap: () => _showLoginSheet(context),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: const Text(
-                        'Login to your account',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
+                  const SizedBox(height: 20),
+                  if (user != null) ...[
+                    FadeInSlide(
+                      delay: 0.1,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 3),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.2),
+                              blurRadius: 15,
+                            ),
+                          ],
+                        ),
+                        child: CircleAvatar(
+                          radius: 45,
+                          backgroundColor: Colors.white,
+                          backgroundImage: user.hasPhoto
+                              ? NetworkImage(user.photoURL!)
+                              : null,
+                          child: !user.hasPhoto
+                              ? _gradientIcon(Icons.person, size: 50)
+                              : null,
                         ),
                       ),
                     ),
-                  ),
-                ),
-              ],
+                  ] else ...[
+                    FadeInSlide(
+                      delay: 0.1,
+                      child: GestureDetector(
+                        onTap: () => _showLoginSheet(context),
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 3),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.2),
+                                blurRadius: 15,
+                              ),
+                            ],
+                          ),
+                          child: CircleAvatar(
+                            radius: 45,
+                            backgroundColor: Colors.white,
+                            child: _gradientIcon(Icons.person, size: 50),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    FadeInSlide(
+                      delay: 0.2,
+                      child: GestureDetector(
+                        onTap: () => _showLoginSheet(context),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Text(
+                            'Login to your account',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
           ),
