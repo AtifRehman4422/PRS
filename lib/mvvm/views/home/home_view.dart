@@ -67,7 +67,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
             child: ClipPath(
               clipper: _HomeHeaderClipper(),
               child: Opacity(
-                opacity: 0.40,
+                opacity: 0.60,
                 child: Image.asset(AppImages.home, fit: BoxFit.cover),
               ),
             ),

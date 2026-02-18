@@ -1,22 +1,37 @@
-import 'package:flutter/material.dart';
-import 'package:propertyrent/core/app_color/app_colors.dart';
-import 'package:propertyrent/mvvm/views/auth/login_view.dart';
-import 'package:propertyrent/core/animations/fade_in_slide.dart';
+import 'dart:io';
 
-class SignupView extends StatefulWidget {
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:propertyrent/core/app_color/app_colors.dart';
+import 'package:propertyrent/core/animations/fade_in_slide.dart';
+import 'package:propertyrent/core/widgets/logo_loader.dart';
+import 'package:propertyrent/mvvm/viewmodels/auth_viewmodel.dart';
+import 'package:propertyrent/mvvm/views/auth/email_verification_code_screen.dart';
+import 'package:propertyrent/mvvm/views/auth/login_view.dart';
+
+class SignupView extends ConsumerStatefulWidget {
   const SignupView({super.key});
 
   @override
-  State<SignupView> createState() => _SignupViewState();
+  ConsumerState<SignupView> createState() => _SignupViewState();
 }
 
-class _SignupViewState extends State<SignupView> {
+class _SignupViewState extends ConsumerState<SignupView> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
+  bool _isSigningUp = false;
+  String? _pickedImagePath;
+
+  static final _onlyDigits = FilteringTextInputFormatter.allow(RegExp(r'[0-9]'));
 
   @override
   void dispose() {
@@ -24,7 +39,119 @@ class _SignupViewState extends State<SignupView> {
     _emailController.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImageFromGallery() async {
+    final picker = ImagePicker();
+    final xFile = await picker.pickImage(source: ImageSource.gallery);
+    if (xFile != null && mounted) setState(() => _pickedImagePath = xFile.path);
+  }
+
+  void _showMessageDialog({
+    required String title,
+    required String message,
+    required bool isError,
+    VoidCallback? onOk,
+  }) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(
+              isError ? Icons.info_outline : Icons.check_circle_outline,
+              color: isError ? Colors.orange : Colors.green,
+              size: 28,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(ctx).colorScheme.onSurface,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          message,
+          style: TextStyle(
+            fontSize: 15,
+            color: Theme.of(ctx).colorScheme.onSurface.withValues(alpha: 0.85),
+            height: 1.4,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              onOk?.call();
+            },
+            child: Text('OK', style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.primary)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Send verification code to email; then open verification screen. No Firebase signup yet.
+  Future<void> _signUpWithEmail() async {
+    if (!_formKey.currentState!.validate()) return;
+    if (_pickedImagePath == null) {
+      _showMessageDialog(
+        title: 'Profile image required',
+        message: 'Please select a profile image from gallery.',
+        isError: true,
+      );
+      return;
+    }
+    setState(() => _isSigningUp = true);
+    try {
+      final email = _emailController.text.trim();
+      final password = _passwordController.text;
+      final emailRepo = ref.read(emailVerificationRepositoryProvider);
+      // Request verification code and always open verification screen.
+      // Code is sent to user's email; we no longer show it in a popup.
+      await emailRepo.requestVerificationCode(email);
+      if (!mounted) return;
+      _openVerificationScreen(email, password);
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      final isDuplicateEmail = e.code == 'email-already-in-use';
+      _showMessageDialog(
+        title: isDuplicateEmail ? 'Email already in use' : 'Error',
+        message: isDuplicateEmail
+            ? 'This email is already registered. Please sign in or use another email.'
+            : (e.message ?? 'Failed to send code'),
+        isError: true,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      _showMessageDialog(
+        title: 'Error',
+        message: e.toString(),
+        isError: true,
+      );
+    } finally {
+      if (mounted) setState(() => _isSigningUp = false);
+    }
+  }
+
+  void _openVerificationScreen(String email, String password) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => EmailVerificationCodeScreen(
+          email: email,
+          password: password,
+        ),
+      ),
+    );
   }
 
   Widget _gradientIcon(
@@ -116,64 +243,72 @@ class _SignupViewState extends State<SignupView> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      // Avatar with edit icon
+                      // Avatar with gallery pick
                       FadeInSlide(
                         delay: 0.0,
-                        child: Stack(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: Colors.white,
-                                  width: 3,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.2),
-                                    blurRadius: 15,
-                                  ),
-                                ],
-                              ),
-                              child: CircleAvatar(
-                                radius: 45,
-                                backgroundColor: colorScheme.surface,
-                                child: _gradientIcon(
-                                  Icons.person_outline,
-                                  size: 45,
-                                  color1: Colors.grey,
-                                  color2: Colors.black,
-                                ),
-                              ),
-                            ),
-                            Positioned(
-                              bottom: 0,
-                              right: 0,
-                              child: Container(
-                                padding: const EdgeInsets.all(8),
+                        child: GestureDetector(
+                          onTap: _pickImageFromGallery,
+                          child: Stack(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(4),
                                 decoration: BoxDecoration(
-                                  color: AppColors.primary,
                                   shape: BoxShape.circle,
                                   border: Border.all(
                                     color: Colors.white,
-                                    width: 2,
+                                    width: 3,
                                   ),
                                   boxShadow: [
                                     BoxShadow(
                                       color: Colors.black.withValues(alpha: 0.2),
-                                      blurRadius: 8,
+                                      blurRadius: 15,
                                     ),
                                   ],
                                 ),
-                                child: const Icon(
-                                  Icons.camera_alt,
-                                  size: 16,
-                                  color: Colors.white,
+                                child: CircleAvatar(
+                                  radius: 45,
+                                  backgroundColor: colorScheme.surface,
+                                  backgroundImage: _pickedImagePath != null
+                                      ? FileImage(File(_pickedImagePath!))
+                                      : null,
+                                  child: _pickedImagePath == null
+                                      ? _gradientIcon(
+                                          Icons.person_outline,
+                                          size: 45,
+                                          color1: Colors.grey,
+                                          color2: Colors.black,
+                                        )
+                                      : null,
                                 ),
                               ),
-                            ),
-                          ],
+                              Positioned(
+                                bottom: 0,
+                                right: 0,
+                                child: Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Colors.white,
+                                      width: 2,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(alpha: 0.2),
+                                        blurRadius: 8,
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Icon(
+                                    Icons.photo_library,
+                                    size: 16,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -195,10 +330,15 @@ class _SignupViewState extends State<SignupView> {
             ),
           ),
 
-          // Form content
+          // Form content - scroll with keyboard so focused field stays visible
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
+              padding: EdgeInsets.only(
+                left: 24,
+                right: 24,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+              ),
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -232,8 +372,11 @@ class _SignupViewState extends State<SignupView> {
                         iconColor1: AppColors.primary,
                         iconColor2: Colors.red.shade800,
                         keyboardType: TextInputType.emailAddress,
-                        validator: (value) =>
-                            value?.isEmpty ?? true ? 'Email required' : null,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) return 'Email required';
+                          if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) return 'Invalid email';
+                          return null;
+                        },
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -257,11 +400,7 @@ class _SignupViewState extends State<SignupView> {
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  _gradientIcon(
-                                    Icons.arrow_drop_down,
-                                    color1: AppColors.primary,
-                                    color2: Colors.black,
-                                  ),
+                                 
                                   const Text(
                                     '🇵🇰',
                                     style: TextStyle(fontSize: 18),
@@ -287,8 +426,10 @@ class _SignupViewState extends State<SignupView> {
                                 controller: _phoneController,
                                 keyboardType: TextInputType.phone,
                                 maxLength: 10,
+                                inputFormatters: [_onlyDigits],
+                                onChanged: (_) => setState(() {}),
                                 decoration: InputDecoration(
-                                  hintText: 'Phone Number',
+                                  hintText: '3*********',
                                   hintStyle: TextStyle(
                                     color: colorScheme.onSurface.withValues(alpha: 0.5),
                                   ),
@@ -298,12 +439,18 @@ class _SignupViewState extends State<SignupView> {
                                     horizontal: 16,
                                   ),
                                 ),
+                                validator: (v) {
+                                  final s = (v ?? '').trim();
+                                  if (s.length != 10) return 'Enter 10-digit number';
+                                  if (!RegExp(r'^[0-9]{10}$').hasMatch(s)) return 'Only digits';
+                                  return null;
+                                },
                               ),
                             ),
                             Padding(
                               padding: const EdgeInsets.only(right: 16),
                               child: Text(
-                                '0/10',
+                                '${_phoneController.text.length}/10',
                                 style: TextStyle(
                                   color: colorScheme.onSurface.withValues(alpha: 0.5),
                                   fontSize: 12,
@@ -339,24 +486,55 @@ class _SignupViewState extends State<SignupView> {
                             () => _obscurePassword = !_obscurePassword,
                           ),
                         ),
-                        validator: (value) =>
-                            value?.isEmpty ?? true ? 'Password required' : null,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) return 'Password required';
+                          if (value.length < 6) return 'Min 6 characters';
+                          return null;
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Confirm Password
+                    FadeInSlide(
+                      delay: 0.55,
+                      child: _buildInputField(
+                        context,
+                        controller: _confirmPasswordController,
+                        hint: 'Confirm Password',
+                        icon: Icons.lock_outline,
+                        iconColor1: Colors.grey,
+                        iconColor2: Colors.black,
+                        obscureText: _obscureConfirmPassword,
+                        suffixIcon: IconButton(
+                          icon: _gradientIcon(
+                            _obscureConfirmPassword
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                            color1: AppColors.primary,
+                            color2: Colors.black,
+                          ),
+                          onPressed: () => setState(
+                            () => _obscureConfirmPassword = !_obscureConfirmPassword,
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) return 'Confirm password';
+                          if (value != _passwordController.text) return 'Passwords do not match';
+                          return null;
+                        },
                       ),
                     ),
                     const SizedBox(height: 32),
 
-                    // SignUp Button
+                    // Sign Up (email + password)
                     FadeInSlide(
                       delay: 0.6,
                       child: SizedBox(
                         width: double.infinity,
                         height: 56,
                         child: ElevatedButton(
-                          onPressed: () {
-                            if (_formKey.currentState!.validate()) {
-                              // Handle signup
-                            }
-                          },
+                          onPressed: _isSigningUp ? null : _signUpWithEmail,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
                             foregroundColor: Colors.white,
@@ -366,13 +544,15 @@ class _SignupViewState extends State<SignupView> {
                             elevation: 4,
                             shadowColor: AppColors.primary.withValues(alpha: 0.4),
                           ),
-                          child: const Text(
-                            'Sign Up',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                          child: _isSigningUp
+                              ? const LogoLoader(size: 28)
+                              : const Text(
+                                  'Sign Up',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                         ),
                       ),
                     ),
@@ -425,6 +605,7 @@ class _SignupViewState extends State<SignupView> {
                       ),
                     ),
                     const SizedBox(height: 20),
+                    const SizedBox(height: 60),
                   ],
                 ),
               ),

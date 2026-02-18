@@ -1,8 +1,10 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:propertyrent/core/app_color/app_colors.dart';
 import 'package:propertyrent/core/constants/app_images.dart';
+import 'package:propertyrent/core/widgets/logo_loader.dart';
 import 'package:propertyrent/core/animations/fade_in_slide.dart';
 import 'package:propertyrent/mvvm/viewmodels/auth_viewmodel.dart';
 import 'package:propertyrent/mvvm/views/auth/signup_view.dart';
@@ -21,6 +23,48 @@ class _LoginViewState extends ConsumerState<LoginView> {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _isGoogleLoading = false;
+  bool _isEmailLoading = false;
+
+  Future<void> _handleEmailLogin(BuildContext context) async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _isEmailLoading = true);
+    try {
+      final repo = ref.read(authRepositoryProvider);
+      final user = await repo.signInWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+      if (!context.mounted) return;
+      if (user != null) {
+        ref.invalidate(authStateProvider);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Welcome, ${user.displayLabel}!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.of(context).pop(true);
+      }
+    } on FirebaseAuthException catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message ?? 'Login failed'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Login failed: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isEmailLoading = false);
+    }
+  }
 
   Future<void> _handleGoogleSignIn(BuildContext context) async {
     setState(() => _isGoogleLoading = true);
@@ -301,11 +345,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
                         width: double.infinity,
                         height: 56,
                         child: ElevatedButton(
-                          onPressed: () {
-                            if (_formKey.currentState!.validate()) {
-                              // Handle login
-                            }
-                          },
+                          onPressed: _isEmailLoading ? null : () => _handleEmailLogin(context),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
                             foregroundColor: Colors.white,
@@ -315,13 +355,15 @@ class _LoginViewState extends ConsumerState<LoginView> {
                             elevation: 4,
                             shadowColor: AppColors.primary.withValues(alpha: 0.4),
                           ),
-                          child: const Text(
-                            'Login',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                          child: _isEmailLoading
+                              ? const LogoLoader(size: 28)
+                              : const Text(
+                                  'Login',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                         ),
                       ),
                     ),
@@ -388,34 +430,15 @@ class _LoginViewState extends ConsumerState<LoginView> {
                             ),
                           ),
                           child: _isGoogleLoading
-                              ? SizedBox(
-                                  height: 24,
-                                  width: 24,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: colorScheme.primary,
-                                  ),
-                                )
+                              ? LogoLoader(size: 28, duration: const Duration(milliseconds: 1200))
                               : Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    ShaderMask(
-                                      shaderCallback: (bounds) =>
-                                          const LinearGradient(
-                                            colors: [
-                                              Colors.red,
-                                              Colors.orange,
-                                              Colors.green,
-                                              Colors.blue,
-                                            ],
-                                            begin: Alignment.topLeft,
-                                            end: Alignment.bottomRight,
-                                          ).createShader(bounds),
-                                      child: const Icon(
-                                        Icons.g_mobiledata,
-                                        color: Colors.white,
-                                        size: 32,
-                                      ),
+                                    Image.asset(
+                                      AppImages.logo,
+                                      height: 28,
+                                      width: 28,
+                                      fit: BoxFit.contain,
                                     ),
                                     const SizedBox(width: 10),
                                     Text(

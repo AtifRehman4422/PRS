@@ -1,0 +1,15 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Email verification codes: allow read/write for app (fallback when Cloud Functions not used).
+    // For production, restrict to unauthenticated or use Cloud Functions only.
+    match /email_verification_codes/{docId} {
+      allow read, write: if true;
+    }
+    // Trigger Email extension: app writes here to send verification code to user's signup email.
+    match /mail/{docId} {
+      allow create: if true;
+      allow read, update, delete: if false;
+    }
+  }
+}
