@@ -2,23 +2,121 @@ import 'package:flutter/material.dart';
 import 'package:propertyrent/core/app_color/app_colors.dart';
 import 'package:propertyrent/core/constants/app_images.dart';
 import 'package:propertyrent/mvvm/views/auth/login_view.dart';
+import 'package:propertyrent/mvvm/views/auth/reset_password_view.dart';
 import 'package:propertyrent/core/animations/fade_in_slide.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:propertyrent/core/widgets/logo_loader.dart';
+import 'package:propertyrent/mvvm/viewmodels/auth_viewmodel.dart';
 
-class ForgotPasswordView extends StatefulWidget {
+class ForgotPasswordView extends ConsumerStatefulWidget {
   const ForgotPasswordView({super.key});
 
   @override
-  State<ForgotPasswordView> createState() => _ForgotPasswordViewState();
+  ConsumerState<ForgotPasswordView> createState() => _ForgotPasswordViewState();
 }
 
-class _ForgotPasswordViewState extends State<ForgotPasswordView> {
+class _ForgotPasswordViewState extends ConsumerState<ForgotPasswordView> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
+  bool _isSending = false;
+
+  static final _emailRegex =
+      RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,}$');
 
   @override
   void dispose() {
     _emailController.dispose();
     super.dispose();
+  }
+
+  void _showMessageDialog({
+    required String title,
+    required String message,
+    required bool isError,
+    VoidCallback? onOk,
+  }) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(
+              isError ? Icons.info_outline : Icons.check_circle_outline,
+              color: isError ? Colors.orange : Colors.green,
+              size: 28,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(ctx).colorScheme.onSurface,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          message,
+          style: TextStyle(
+            fontSize: 15,
+            color: Theme.of(ctx).colorScheme.onSurface.withValues(alpha: 0.85),
+            height: 1.4,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              onOk?.call();
+            },
+            child: Text(
+              'OK',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: AppColors.primary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _sendResetLink() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _isSending = true);
+    final email = _emailController.text.trim();
+    try {
+      await ref.read(passwordResetRepositoryProvider).requestPasswordReset(email);
+      if (!mounted) return;
+      _showMessageDialog(
+        title: 'Check your email',
+        message:
+            'We sent a 6-digit reset code to:\n\n$email\n\nIf you don’t see it in Inbox, please check Spam/Promotions.',
+        isError: false,
+        onOk: () {
+          Navigator.of(context).pop();
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => ResetPasswordView(email: email),
+            ),
+          );
+        },
+      );
+    } catch (e) {
+      if (!mounted) return;
+      _showMessageDialog(
+        title: 'Error',
+        message: e.toString(),
+        isError: true,
+      );
+    } finally {
+      if (mounted) setState(() => _isSending = false);
+    }
   }
 
   Widget _gradientIcon(
@@ -245,9 +343,9 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                             ),
                           ),
                           validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Email required';
-                            }
+                            final v = (value ?? '').trim();
+                            if (v.isEmpty) return 'Email required';
+                            if (!_emailRegex.hasMatch(v)) return 'Invalid email';
                             return null;
                           },
                         ),
@@ -262,37 +360,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                         width: double.infinity,
                         height: 56,
                         child: ElevatedButton(
-                          onPressed: () {
-                            if (_formKey.currentState!.validate()) {
-                              // Handle forgot password
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: const Row(
-                                    children: [
-                                      Icon(
-                                        Icons.check_circle,
-                                        color: Colors.white,
-                                      ),
-                                      SizedBox(width: 10),
-                                      Text('Password reset email sent!'),
-                                    ],
-                                  ),
-                                  backgroundColor: Colors.green,
-                                  behavior: SnackBarBehavior.floating,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                ),
-                              );
-                              // Go to login after sending email
-                              Future.delayed(
-                                const Duration(milliseconds: 500),
-                                () {
-                                  _goToLogin();
-                                },
-                              );
-                            }
-                          },
+                          onPressed: _isSending ? null : _sendResetLink,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
                             foregroundColor: Colors.white,
@@ -302,20 +370,22 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
                             elevation: 4,
                           shadowColor: AppColors.primary.withValues(alpha: 0.4),
                           ),
-                          child: const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.send, size: 20),
-                              SizedBox(width: 10),
-                              Text(
-                                'Send Email',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
+                          child: _isSending
+                              ? const LogoLoader(size: 28)
+                              : const Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.send, size: 20),
+                                    SizedBox(width: 10),
+                                    Text(
+                                      'Send Email',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ),
-                            ],
-                          ),
                         ),
                       ),
                     ),

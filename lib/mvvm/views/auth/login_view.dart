@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -36,7 +35,6 @@ class _LoginViewState extends ConsumerState<LoginView> {
       );
       if (!context.mounted) return;
       if (user != null) {
-        ref.invalidate(authStateProvider);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Welcome, ${user.displayLabel}!'),
@@ -45,19 +43,11 @@ class _LoginViewState extends ConsumerState<LoginView> {
         );
         Navigator.of(context).pop(true);
       }
-    } on FirebaseAuthException catch (e) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.message ?? 'Login failed'),
-          backgroundColor: Colors.red,
-        ),
-      );
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Login failed: $e'),
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
           backgroundColor: Colors.red,
         ),
       );
@@ -79,7 +69,6 @@ class _LoginViewState extends ConsumerState<LoginView> {
       final user = await repo.signInWithGoogle();
       if (!context.mounted) return;
       if (user != null) {
-        ref.invalidate(authStateProvider);
         if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -96,22 +85,6 @@ class _LoginViewState extends ConsumerState<LoginView> {
           const SnackBar(content: Text('Sign in cancelled')),
         );
       }
-    } on PlatformException catch (e, st) {
-      debugPrint('Google sign in error: $e\n$st');
-      if (!context.mounted) return;
-      final isSha1Error = e.code == 'sign_in_failed' &&
-          (e.message ?? '').contains('ApiException: 10');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            isSha1Error
-                ? 'Add SHA-1 in Firebase Console (Project Settings → Android app → Add fingerprint). Debug SHA-1: 86:79:C0:84:1C:1C:37:6E:29:5F:07:42:C7:71:FB:CA:B6:AF:37:D5'
-                : 'Login failed: ${e.message ?? e.code}',
-          ),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 8),
-        ),
-      );
     } catch (e, st) {
       debugPrint('Google sign in error: $e\n$st');
       if (!context.mounted) return;

@@ -1,111 +1,121 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:propertyrent/data/models/auth_user_model.dart';
+import 'dart:async';
 
-/// Auth data layer: Firebase Auth + Google Sign-In + Phone. No UI or Riverpod here.
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:propertyrent/data/datasource/auth_api.dart';
+import 'package:propertyrent/data/models/auth_user_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+const String _tokenKey = 'auth_token';
+
+/// Auth via PRS backend only (no Firebase). JWT stored in SharedPreferences.
+/// Google Sign-In used only to get id_token, sent to backend; user is stored in DB.
 class AuthRepository {
   AuthRepository({
-    FirebaseAuth? firebaseAuth,
+    SharedPreferences? prefs,
     GoogleSignIn? googleSignIn,
-  })  : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance,
+  })  : _prefs = prefs,
         _googleSignIn = googleSignIn ?? GoogleSignIn();
 
-  final FirebaseAuth _firebaseAuth;
+  final SharedPreferences? _prefs;
   final GoogleSignIn _googleSignIn;
+  final _authStateController = StreamController<AuthUser?>.broadcast();
 
-  /// Stream of auth state. Maps Firebase [User] to [AuthUser]; null when logged out.
-  Stream<AuthUser?> get authStateChanges =>
-      _firebaseAuth.authStateChanges().map(_userToAuthUser);
-
-  /// Sign in with Google. Returns [AuthUser] on success, null if user cancelled.
-  Future<AuthUser?> signInWithGoogle() async {
-    final googleUser = await _googleSignIn.signIn();
-    if (googleUser == null) return null;
-
-    final googleAuth = await googleUser.authentication;
-    final credential = GoogleAuthProvider.credential(
-      accessToken: googleAuth.accessToken,
-      idToken: googleAuth.idToken,
-    );
-
-    final userCredential = await _firebaseAuth.signInWithCredential(credential);
-    return _userToAuthUser(userCredential.user);
+  static Future<SharedPreferences> _getPrefs(SharedPreferences? p) async {
+    return p ?? await SharedPreferences.getInstance();
   }
 
-  /// Sign out from Firebase and Google.
-  Future<void> signOut() async {
-    await _firebaseAuth.signOut();
-    await _googleSignIn.signOut();
+  Stream<AuthUser?> get authStateChanges => _authStateController.stream;
+
+  Future<String?> _getToken() async {
+    final prefs = await _getPrefs(_prefs);
+    return prefs.getString(_tokenKey);
   }
 
-  /// Sign up with email and password. Returns [AuthUser] on success.
-  Future<AuthUser?> signUpWithEmailAndPassword({
-    required String email,
-    required String password,
-  }) async {
-    final userCredential = await _firebaseAuth.createUserWithEmailAndPassword(
-      email: email.trim(),
-      password: password,
-    );
-    return _userToAuthUser(userCredential.user);
+  Future<void> _setToken(String? token) async {
+    final prefs = await _getPrefs(_prefs);
+    if (token == null) {
+      await prefs.remove(_tokenKey);
+    } else {
+      await prefs.setString(_tokenKey, token);
+    }
   }
 
-  /// Send verification email to current user (e.g. after signup). OTP/link goes to email.
-  Future<void> sendEmailVerification() async {
-    await _firebaseAuth.currentUser?.sendEmailVerification();
+  /// Call on app start to restore auth state from stored token.
+  Future<void> restoreAuthState() async {
+    final token = await _getToken();
+    if (token == null || token.isEmpty) {
+      _authStateController.add(null);
+      return;
+    }
+    final profile = await AuthApi.getProfile(token);
+    if (profile != null) {
+      _authStateController.add(profile.toAuthUser());
+    } else {
+      await _setToken(null);
+      _authStateController.add(null);
+    }
   }
 
-  /// Sign in with email and password. Returns [AuthUser] on success.
   Future<AuthUser?> signInWithEmailAndPassword({
     required String email,
     required String password,
   }) async {
-    final userCredential = await _firebaseAuth.signInWithEmailAndPassword(
-      email: email.trim(),
-      password: password,
-    );
-    return _userToAuthUser(userCredential.user);
+    final result = await AuthApi.login(email, password);
+    if (!result.success || result.token == null) {
+      throw Exception(result.message ?? 'Login failed');
+    }
+    await _setToken(result.token);
+    final profile = await AuthApi.getProfile(result.token!);
+    final user = profile?.toAuthUser();
+    if (user != null) _authStateController.add(user);
+    return user;
   }
 
-  /// Send OTP to [phoneNumber] (e.g. +923001234567). Callbacks for result.
-  void verifyPhoneNumber({
-    required String phoneNumber,
-    required void Function(String verificationId, int? resendToken) onCodeSent,
-    required void Function(FirebaseAuthException e) onVerificationFailed,
-    void Function(PhoneAuthCredential credential)? onVerificationCompleted,
-    void Function(String verificationId)? onCodeAutoRetrievalTimeout,
-  }) {
-    _firebaseAuth.verifyPhoneNumber(
-      phoneNumber: phoneNumber,
-      verificationCompleted: onVerificationCompleted ?? (_) {},
-      verificationFailed: onVerificationFailed,
-      codeSent: onCodeSent,
-      codeAutoRetrievalTimeout: onCodeAutoRetrievalTimeout ?? (_) {},
-    );
-  }
-
-  /// Complete phone sign-in with OTP. Returns [AuthUser] on success.
+  /// Phone auth was removed. Kept as stub so existing callers compile.
   Future<AuthUser?> signInWithPhoneCredential({
     required String verificationId,
     required String smsCode,
   }) async {
-    final credential = PhoneAuthProvider.credential(
-      verificationId: verificationId,
-      smsCode: smsCode,
+    throw UnimplementedError(
+      'Phone auth is not supported. Use email signup or Google login.',
     );
-    final userCredential =
-        await _firebaseAuth.signInWithCredential(credential);
-    return _userToAuthUser(userCredential.user);
   }
 
-  static AuthUser? _userToAuthUser(User? user) {
-    if (user == null) return null;
-    return AuthUser(
-      uid: user.uid,
-      displayName: user.displayName,
-      email: user.email,
-      photoURL: user.photoURL,
-      phoneNumber: user.phoneNumber,
-    );
+  /// Google: get id_token from Google, send to backend; backend creates/updates user in DB and returns JWT.
+  Future<AuthUser?> signInWithGoogle() async {
+    final googleUser = await _googleSignIn.signIn();
+    if (googleUser == null) return null;
+    final auth = await googleUser.authentication;
+    final idToken = auth.idToken;
+    if (idToken == null || idToken.isEmpty) return null;
+    final result = await AuthApi.googleLogin(idToken);
+    if (!result.success || result.token == null) {
+      throw Exception(result.message ?? 'Google login failed');
+    }
+    await _setToken(result.token);
+    final profile = await AuthApi.getProfile(result.token!);
+    final user = profile?.toAuthUser();
+    if (user != null) _authStateController.add(user);
+    return user;
+  }
+
+  Future<void> signOut() async {
+    await _googleSignIn.signOut();
+    await _setToken(null);
+    _authStateController.add(null);
+  }
+
+  Future<AuthUser?> getCurrentUser() async {
+    final token = await _getToken();
+    if (token == null || token.isEmpty) return null;
+    final profile = await AuthApi.getProfile(token);
+    return profile?.toAuthUser();
+  }
+
+  /// After signup OTP verification, set token and emit user so UI updates.
+  Future<void> setTokenAndEmitUser(String token) async {
+    await _setToken(token);
+    final profile = await AuthApi.getProfile(token);
+    if (profile != null) _authStateController.add(profile.toAuthUser());
   }
 }

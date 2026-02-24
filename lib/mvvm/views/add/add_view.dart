@@ -4,6 +4,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:propertyrent/core/app_color/app_colors.dart';
 import 'package:propertyrent/core/constants/app_images.dart';
 import 'package:propertyrent/core/animations/fade_in_slide.dart';
+import 'package:propertyrent/mvvm/views/home/search_city_view.dart';
+import 'package:propertyrent/mvvm/views/add/map_location_picker.dart';
 
 class AddView extends StatefulWidget {
   const AddView({super.key});
@@ -209,7 +211,9 @@ class _AddViewState extends State<AddView> {
     'Kanal',
   ];
 
-  final String _selectedCity = 'Islamabad';
+  // Add page only - independent from Home page search city
+  String _addPageSelectedCity = '';
+  String? _selectedLocationAddress;
   // ignore: unused_field - reserved for time slot filter
   final String _selectedTimeSlot = 'Day';
   bool _isNegotiable = false;
@@ -2055,35 +2059,22 @@ class _AddViewState extends State<AddView> {
     final colorScheme = Theme.of(context).colorScheme;
     return InkWell(
       onTap: () {
-        // TODO: Open city selection
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-        decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: colorScheme.outline.withValues(alpha: 0.3)),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(_selectedCity, style: TextStyle(fontSize: 16, color: colorScheme.onSurface)),
-            _gradientIcon(
-              Icons.chevron_right,
-              color1: AppColors.primary,
-              color2: Colors.black,
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (context) => Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.75,
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLocationSelector() {
-    final colorScheme = Theme.of(context).colorScheme;
-    return InkWell(
-      onTap: () {
-        // TODO: Open location selection
+            child: SearchCityView(
+              selectedCityName: _addPageSelectedCity,
+              onCitySelected: (name, imagePath) {
+                setState(() => _addPageSelectedCity = name);
+              },
+            ),
+          ),
+        );
       },
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
@@ -2096,8 +2087,59 @@ class _AddViewState extends State<AddView> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Select Location',
-              style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 16),
+              _addPageSelectedCity.isEmpty ? 'Select City' : _addPageSelectedCity,
+              style: TextStyle(
+                fontSize: 16,
+                color: _addPageSelectedCity.isEmpty
+                    ? colorScheme.onSurface.withValues(alpha: 0.6)
+                    : colorScheme.onSurface,
+              ),
+            ),
+            _gradientIcon(
+              Icons.chevron_right,
+              color1: AppColors.primary,
+              color2: Colors.black,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openMapsAndSetAddress() async {
+    final address = await MapLocationPicker.open(
+      context,
+      initialAddress: _selectedLocationAddress,
+    );
+    if (address != null && mounted) setState(() => _selectedLocationAddress = address);
+  }
+
+  Widget _buildLocationSelector() {
+    final colorScheme = Theme.of(context).colorScheme;
+    return InkWell(
+      onTap: _openMapsAndSetAddress,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: colorScheme.outline.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Text(
+                _selectedLocationAddress ?? 'Select Location',
+                style: TextStyle(
+                  color: _selectedLocationAddress != null
+                      ? colorScheme.onSurface
+                      : colorScheme.onSurface.withValues(alpha: 0.6),
+                  fontSize: 16,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
             _gradientIcon(
               Icons.chevron_right,

@@ -1,4 +1,4 @@
-/// App-level auth user model. Used by ViewModel/View; mapping from Firebase is in repository.
+/// App-level auth user model. Used by ViewModel/View; filled from backend profile or login.
 class AuthUser {
   const AuthUser({
     required this.uid,

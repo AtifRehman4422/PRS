@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:propertyrent/data/models/auth_user_model.dart';
 import 'package:propertyrent/data/repository/auth_repository.dart';
 import 'package:propertyrent/data/repository/email_verification_repository.dart';
+import 'package:propertyrent/data/repository/password_reset_repository.dart';
 
 /// ViewModel layer: exposes auth state and actions via Riverpod.
 
@@ -11,6 +12,10 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
 
 final emailVerificationRepositoryProvider = Provider<EmailVerificationRepository>((ref) {
   return EmailVerificationRepository();
+});
+
+final passwordResetRepositoryProvider = Provider<PasswordResetRepository>((ref) {
+  return PasswordResetRepository();
 });
 
 /// Stream of current auth user. Null when logged out.

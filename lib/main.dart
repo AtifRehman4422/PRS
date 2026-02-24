@@ -1,25 +1,13 @@
-import 'dart:io' show Platform;
-
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:propertyrent/core/app_color/app_colors.dart';
 import 'package:propertyrent/core/theme/theme_provider.dart';
-import 'package:propertyrent/firebase_options.dart';
+import 'package:propertyrent/mvvm/viewmodels/auth_viewmodel.dart';
 import 'routes/app_router.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Initialize Firebase (uses Android/iOS config from firebase_options.dart)
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-
-  // Console message: app initialized from iOS or Android
-  final platform = Platform.isAndroid ? 'Android' : (Platform.isIOS ? 'iOS' : 'Unknown');
-  debugPrint('🔥 Firebase initialized successfully — App running on $platform');
 
   // Set portrait orientation only
   await SystemChrome.setPreferredOrientations([
@@ -188,6 +176,7 @@ class _MyAppState extends ConsumerState<MyApp> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(themeModeProvider.notifier).loadFromPrefs();
+      ref.read(authRepositoryProvider).restoreAuthState();
     });
   }
 

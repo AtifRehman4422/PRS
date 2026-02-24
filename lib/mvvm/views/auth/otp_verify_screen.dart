@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:propertyrent/core/app_color/app_colors.dart';
 import 'package:propertyrent/core/widgets/logo_loader.dart';
-import 'package:propertyrent/mvvm/viewmodels/auth_viewmodel.dart';
 
-/// OTP verification screen after phone number is entered on signup.
-/// On success, signs in with Firebase Phone Auth and pops so auth state updates.
+/// Legacy phone OTP screen. Phone auth was removed; use email signup or Google login.
 class OtpVerifyScreen extends ConsumerStatefulWidget {
   const OtpVerifyScreen({
     super.key,
@@ -33,39 +31,16 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
 
   Future<void> _verifyOtp() async {
     if (!_formKey.currentState!.validate()) return;
-    final smsCode = _otpController.text.trim();
-    if (smsCode.isEmpty) return;
-
     setState(() => _isVerifying = true);
-    try {
-      final repo = ref.read(authRepositoryProvider);
-      final user = await repo.signInWithPhoneCredential(
-        verificationId: widget.verificationId,
-        smsCode: smsCode,
-      );
-      if (!mounted) return;
-      if (user != null) {
-        ref.invalidate(authStateProvider);
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Welcome! ${user.displayLabel}'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        Navigator.of(context).popUntil((route) => route.isFirst);
-      }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Invalid OTP or error: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    } finally {
-      if (mounted) setState(() => _isVerifying = false);
-    }
+    await Future.delayed(const Duration(milliseconds: 300));
+    if (!mounted) return;
+    setState(() => _isVerifying = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Phone OTP is not used. Use email signup or Google login.'),
+        backgroundColor: Colors.orange,
+      ),
+    );
   }
 
   @override

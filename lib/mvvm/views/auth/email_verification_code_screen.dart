@@ -1,22 +1,20 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:propertyrent/core/app_color/app_colors.dart';
 import 'package:propertyrent/core/widgets/logo_loader.dart';
+import 'package:propertyrent/data/datasource/auth_api.dart';
 import 'package:propertyrent/mvvm/viewmodels/auth_viewmodel.dart';
 
-/// Email verification code screen. User enters 6-digit code sent to email.
-/// On success, registers on Firebase and navigates to login.
+/// Email verification code screen. User enters 6-digit code sent by backend after signup.
+/// On success, backend creates account and returns JWT; we store token and navigate back.
 class EmailVerificationCodeScreen extends ConsumerStatefulWidget {
   const EmailVerificationCodeScreen({
     super.key,
     required this.email,
-    required this.password,
   });
 
   final String email;
-  final String password;
 
   @override
   ConsumerState<EmailVerificationCodeScreen> createState() =>
@@ -29,7 +27,27 @@ class _EmailVerificationCodeScreenState
   final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
   bool _isVerifying = false;
   bool _isResending = false;
-  String? _devCode;
+  bool _didShowSentMessage = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_didShowSentMessage && mounted) {
+        _didShowSentMessage = true;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'OTP sent to ${widget.email}. Check your inbox and Spam folder.',
+            ),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -45,40 +63,23 @@ class _EmailVerificationCodeScreenState
     if (_enteredCode.length != 6) return;
     setState(() => _isVerifying = true);
     try {
-      final repo = ref.read(emailVerificationRepositoryProvider);
-      final valid = await repo.verifyCode(widget.email, _enteredCode);
+      final result = await AuthApi.verifyOtp(widget.email, _enteredCode);
       if (!mounted) return;
-      if (!valid) {
+      if (!result.success || result.token == null) {
         setState(() => _isVerifying = false);
-        _showDialog('Invalid code', 'Please check the code and try again.', isError: true);
+        _showDialog('Invalid or expired code', result.message ?? 'Please check the code and try again.', isError: true);
         return;
       }
       final authRepo = ref.read(authRepositoryProvider);
-      await authRepo.signUpWithEmailAndPassword(
-        email: widget.email,
-        password: widget.password,
-      );
-      await authRepo.signOut();
+      await authRepo.setTokenAndEmitUser(result.token!);
       if (!mounted) return;
-      ref.invalidate(authStateProvider);
       _showDialog(
         'Account created',
-        'You can now sign in with your email and password.',
+        'You are signed in. Welcome!',
         isError: false,
         onOk: () {
-          Navigator.of(context).pop();
-          Navigator.of(context).pop();
+          Navigator.of(context).popUntil((route) => route.isFirst);
         },
-      );
-    } on FirebaseAuthException catch (e) {
-      if (!mounted) return;
-      final isDuplicate = e.code == 'email-already-in-use';
-      _showDialog(
-        isDuplicate ? 'Email already in use' : 'Error',
-        isDuplicate
-            ? 'This email is already registered. Please sign in.'
-            : (e.message ?? e.code),
-        isError: true,
       );
     } catch (e) {
       if (!mounted) return;
@@ -90,24 +91,12 @@ class _EmailVerificationCodeScreenState
 
   Future<void> _resend() async {
     setState(() => _isResending = true);
-    try {
-      final repo = ref.read(emailVerificationRepositoryProvider);
-      final devCode = await repo.requestVerificationCode(widget.email);
-      if (!mounted) return;
-      setState(() {
-        _isResending = false;
-        _devCode = devCode;
-      });
-      if (devCode != null) {
-        _showDialog('Code (for testing)', 'Your code: $devCode', isError: false);
-      } else {
-        _showDialog('Code sent', 'Check your email for the new code.', isError: false);
-      }
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _isResending = false);
-      _showDialog('Resend failed', e.toString(), isError: true);
-    }
+    _showDialog(
+      'Resend code',
+      'To get a new code, go back and submit signup again. The previous code is valid for 5 minutes.',
+      isError: false,
+    );
+    if (mounted) setState(() => _isResending = false);
   }
 
   void _showDialog(String title, String message, {required bool isError, VoidCallback? onOk}) {
@@ -226,16 +215,6 @@ class _EmailVerificationCodeScreenState
                     style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
                   ),
                 ),
-                if (_devCode != null) ...[
-                  const SizedBox(height: 12),
-                  Text(
-                    'Test code: $_devCode',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.white.withValues(alpha: 0.8),
-                    ),
-                  ),
-                ],
                 const SizedBox(height: 40),
               ],
             ),

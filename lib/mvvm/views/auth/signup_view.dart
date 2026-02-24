@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,7 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:propertyrent/core/app_color/app_colors.dart';
 import 'package:propertyrent/core/animations/fade_in_slide.dart';
 import 'package:propertyrent/core/widgets/logo_loader.dart';
-import 'package:propertyrent/mvvm/viewmodels/auth_viewmodel.dart';
+import 'package:propertyrent/data/datasource/auth_api.dart';
 import 'package:propertyrent/mvvm/views/auth/email_verification_code_screen.dart';
 import 'package:propertyrent/mvvm/views/auth/login_view.dart';
 
@@ -100,7 +99,7 @@ class _SignupViewState extends ConsumerState<SignupView> {
     );
   }
 
-  /// Send verification code to email; then open verification screen. No Firebase signup yet.
+  /// Backend signup: sends OTP to email and opens verification screen.
   Future<void> _signUpWithEmail() async {
     if (!_formKey.currentState!.validate()) return;
     if (_pickedImagePath == null) {
@@ -113,43 +112,42 @@ class _SignupViewState extends ConsumerState<SignupView> {
     }
     setState(() => _isSigningUp = true);
     try {
-      final email = _emailController.text.trim();
-      final password = _passwordController.text;
-      final emailRepo = ref.read(emailVerificationRepositoryProvider);
-      // Request verification code and always open verification screen.
-      // Code is sent to user's email; we no longer show it in a popup.
-      await emailRepo.requestVerificationCode(email);
-      if (!mounted) return;
-      _openVerificationScreen(email, password);
-    } on FirebaseAuthException catch (e) {
-      if (!mounted) return;
-      final isDuplicateEmail = e.code == 'email-already-in-use';
-      _showMessageDialog(
-        title: isDuplicateEmail ? 'Email already in use' : 'Error',
-        message: isDuplicateEmail
-            ? 'This email is already registered. Please sign in or use another email.'
-            : (e.message ?? 'Failed to send code'),
-        isError: true,
+      final result = await AuthApi.signup(
+        username: _nameController.text.trim(),
+        email: _emailController.text.trim(),
+        contact: _phoneController.text.trim(),
+        password: _passwordController.text,
+        confirmPassword: _confirmPasswordController.text,
+        profileImagePath: _pickedImagePath!,
       );
+      if (!mounted) return;
+      if (!result.success) {
+        setState(() => _isSigningUp = false);
+        _showMessageDialog(title: 'Error', message: result.message ?? 'Signup failed', isError: true);
+        return;
+      }
+      final email = _emailController.text.trim().toLowerCase();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('OTP sent to $email. Check your inbox and Spam folder.'),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+      _openVerificationScreen(email);
     } catch (e) {
       if (!mounted) return;
-      _showMessageDialog(
-        title: 'Error',
-        message: e.toString(),
-        isError: true,
-      );
+      _showMessageDialog(title: 'Error', message: e.toString(), isError: true);
     } finally {
       if (mounted) setState(() => _isSigningUp = false);
     }
   }
 
-  void _openVerificationScreen(String email, String password) {
+  void _openVerificationScreen(String email) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => EmailVerificationCodeScreen(
-          email: email,
-          password: password,
-        ),
+        builder: (_) => EmailVerificationCodeScreen(email: email),
       ),
     );
   }
