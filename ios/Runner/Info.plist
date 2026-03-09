@@ -49,6 +49,8 @@
 	<string>Property Rent needs camera access to take photos for your ad.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Property Rent needs gallery access to pick photos for your ad.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Property Rent uses your location to show your position on the map when selecting an address.</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>

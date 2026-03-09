@@ -21,6 +21,7 @@ class HomeView extends ConsumerStatefulWidget {
 class _HomeViewState extends ConsumerState<HomeView> {
   String _selectedCityName = 'Islamabad';
   String _selectedCityImage = AppImages.islamabad;
+  String _selectedCityForApi = 'Islamabad';
 
   @override
   Widget build(BuildContext context) {
@@ -84,37 +85,34 @@ class _HomeViewState extends ConsumerState<HomeView> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Logo and Brand
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(6),
-                            // decoration: BoxDecoration(
-                            //   color: const Color.fromARGB(255, 57, 24, 24),
-                            //   borderRadius: BorderRadius.circular(12),
-                            // ),
-                            child: Image.asset(AppImages.logo, height: 40 , color: Colors.white,),
-                          ),
-                          const SizedBox(width: 4),
-                          SizedBox(
-                            width: 150,
-                            child: AnimatedTextKit(
-                              animatedTexts: [
-                                WavyAnimatedText(
-                                  'PropertyRent',
-                                  textStyle: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                    // letterSpacing: 0.5,
-                                  ),
-                                ),
-                              ],
-                              repeatForever: true,
+                      // Logo and Brand (flexible so it doesn't overflow)
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              child: Image.asset(AppImages.logo, height: 40, color: Colors.white),
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: AnimatedTextKit(
+                                animatedTexts: [
+                                  WavyAnimatedText(
+                                    'PropertyRent',
+                                    textStyle: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                                repeatForever: true,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
+                      const SizedBox(width: 8),
                       // User name + avatar (when logged in) or Login button
                       GestureDetector(
                         onTap: onProfileTap,
@@ -137,15 +135,17 @@ class _HomeViewState extends ConsumerState<HomeView> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(
-                                user != null ? user.displayLabel : 'Login',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15,
+                              Flexible(
+                                child: Text(
+                                  user != null ? user.displayLabelShort : 'Login',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
                                 ),
-                                overflow: TextOverflow.ellipsis,
-                                maxLines: 1,
                               ),
                               const SizedBox(width: 10),
                               CircleAvatar(
@@ -281,10 +281,11 @@ class _HomeViewState extends ConsumerState<HomeView> {
                               backgroundColor: Colors.transparent,
                               builder: (context) => SearchCityView(
                                 selectedCityName: _selectedCityName,
-                                onCitySelected: (name, image) {
+                                onCitySelected: (name, image, cityForApi) {
                                   setState(() {
                                     _selectedCityName = name;
                                     _selectedCityImage = image;
+                                    _selectedCityForApi = cityForApi;
                                   });
                                 },
                               ),
@@ -360,8 +361,10 @@ class _HomeViewState extends ConsumerState<HomeView> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) =>
-                            CategoryListingView(categoryName: item.title),
+                        builder: (context) => CategoryListingView(
+                          categoryName: item.title,
+                          city: _selectedCityForApi,
+                        ),
                       ),
                     );
                   },

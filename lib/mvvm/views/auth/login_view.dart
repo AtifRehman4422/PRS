@@ -394,6 +394,8 @@ class _LoginViewState extends ConsumerState<LoginView> {
                         child: OutlinedButton(
                           onPressed: _isGoogleLoading ? null : () => _handleGoogleSignIn(context),
                           style: OutlinedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            surfaceTintColor: Colors.transparent,
                             side: BorderSide(
                               color: Colors.grey.shade300,
                               width: 1.5,
@@ -408,7 +410,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Image.asset(
-                                      AppImages.logo,
+                                      AppImages.google,
                                       height: 28,
                                       width: 28,
                                       fit: BoxFit.contain,

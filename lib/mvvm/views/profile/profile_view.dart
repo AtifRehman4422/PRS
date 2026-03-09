@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:propertyrent/core/app_color/app_colors.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 import 'package:propertyrent/core/animations/fade_in_slide.dart';
 import 'package:propertyrent/core/theme/theme_provider.dart';
 import 'package:propertyrent/data/models/auth_user_model.dart';
@@ -10,6 +11,12 @@ import 'package:propertyrent/mvvm/views/profile/my_profile_view.dart';
 import 'package:propertyrent/mvvm/views/profile/favorites_view.dart';
 import 'package:propertyrent/mvvm/views/profile/my_ads/my_ads_view.dart';
 import 'package:propertyrent/mvvm/views/auth/login_view.dart';
+
+enum _ContactType { call, email, whatsapp }
+
+const String _kContactPhone = '03435020077';
+const String _kContactEmail = 'propertyrent48@gmail.com';
+const String _kWhatsAppNumber = '923435020077'; // 92 + 3435020077
 
 class ProfileView extends ConsumerWidget {
   const ProfileView({super.key});
@@ -331,21 +338,21 @@ class ProfileView extends ConsumerWidget {
                   icon: Icons.call,
                   label: 'Call',
                   color: Colors.green,
-                  onTap: () {},
+                  onTap: () => _launchContact(context, _ContactType.call),
                 ),
                 _buildContactOption(
                   context,
                   icon: Icons.chat,
                   label: 'WhatsApp',
                   color: Colors.green.shade800,
-                  onTap: () {},
+                  onTap: () => _launchContact(context, _ContactType.whatsapp),
                 ),
                 _buildContactOption(
                   context,
                   icon: Icons.email,
                   label: 'Email',
                   color: Colors.blue,
-                  onTap: () {},
+                  onTap: () => _launchContact(context, _ContactType.email),
                 ),
               ],
             ),
@@ -371,6 +378,43 @@ class ProfileView extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _launchContact(BuildContext context, _ContactType type) async {
+    String uri;
+    switch (type) {
+      case _ContactType.call:
+        uri = 'tel:$_kContactPhone';
+        break;
+      case _ContactType.email:
+        uri = 'mailto:$_kContactEmail';
+        break;
+      case _ContactType.whatsapp:
+        uri = 'https://wa.me/$_kWhatsAppNumber';
+        break;
+    }
+    try {
+      if (await canLaunchUrlString(uri)) {
+        await launchUrlString(uri);
+        if (context.mounted) Navigator.pop(context);
+      } else if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not open. Please try again.'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not open. Please try again.'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildContactOption(

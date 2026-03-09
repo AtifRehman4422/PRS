@@ -5,11 +5,15 @@ import 'package:propertyrent/core/app_color/app_colors.dart';
 
 class SearchCityView extends StatefulWidget {
   final String selectedCityName;
-  final Function(String name, String imagePath) onCitySelected;
+  /// (displayName, imagePath, cityForApi for listing filter)
+  final void Function(String name, String imagePath, String cityForApi) onCitySelected;
+  /// When true, adds an "Any" option that shows all cities (no city filter).
+  final bool showAnyOption;
   const SearchCityView({
     super.key,
     required this.selectedCityName,
     required this.onCitySelected,
+    this.showAnyOption = false,
   });
 
   @override
@@ -19,26 +23,183 @@ class SearchCityView extends StatefulWidget {
 class _SearchCityViewState extends State<SearchCityView> {
   final TextEditingController _searchController = TextEditingController();
 
-  final List<Map<String, String>> _allCities = [
-    {'name': 'Islamabad', 'image': AppImages.islamabad},
-    {'name': 'Karachi', 'image': AppImages.karachi},
-    {'name': 'Lahore', 'image': AppImages.lahore},
-    {'name': 'Rawalpindi', 'image': ''},
-    {'name': 'Multan', 'image': AppImages.multan},
-    {'name': 'Faisalabad', 'image': AppImages.faisalabad},
-    {'name': 'Peshawar', 'image': AppImages.peshawar},
-    {'name': 'Quetta', 'image': ''},
-    {'name': 'Sialkot', 'image': ''},
-    {'name': 'Gujranwala', 'image': ''},
-  ];
+  /// name = display, image = asset path, cityForApi = Islamabad | Rawalpindi for API filter
+  static const String _isb = 'Islamabad';
+  static const String _rwp = 'Rawalpindi';
+
+  late final List<Map<String, String>> _allCities;
 
   List<Map<String, String>> _filteredCities = [];
 
   @override
   void initState() {
     super.initState();
+    _allCities = _buildCities();
     _filteredCities = _allCities;
     _searchController.addListener(_onSearchChanged);
+  }
+
+  List<Map<String, String>> _buildCities() {
+    final base = <Map<String, String>>[
+      // ——— Islamabad ———
+      {'name': _isb, 'image': AppImages.islamabad, 'cityForApi': _isb},
+      // F Series
+      {'name': 'F-5', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'F-6', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'F-7', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'F-8', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'F-9', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'F-10', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'F-11', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'F-12', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'F-13', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'F-14', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'F-15', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'F-16', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'F-17', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      // G Series
+      {'name': 'G-5', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'G-6', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'G-7', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'G-8', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'G-9', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'G-10', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'G-11', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'G-12', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'G-13', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'G-14', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'G-15', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'G-16', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      // H Series
+      {'name': 'H-8', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'H-9', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'H-10', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'H-11', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'H-12', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'H-13', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'H-14', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'H-15', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'H-16', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'H-17', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      // I Series
+      {'name': 'I-8', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'I-9', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'I-10', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'I-11', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'I-12', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'I-13', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'I-14', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'I-15', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'I-16', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'I-17', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'I-18', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      // E Series
+      {'name': 'E-7', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'E-8', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'E-9', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'E-10', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'E-11', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'E-12', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'E-13', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'E-14', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'E-15', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'E-16', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'E-17', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'E-18', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      // D Series
+      {'name': 'D-12', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'D-13', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'D-14', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'D-15', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'D-16', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'D-17', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      // Islamabad Housing Societies
+      {'name': 'Jinnah Garden Islamabad', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'Pakistan Town', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'Soan Garden Islamabad', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'Media Town Islamabad', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'PWD Housing Society Islamabad', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'Korang Town Islamabad', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'Naval Anchorage Islamabad', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'Bahria Town Islamabad', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'DHA Islamabad', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'Gulberg Greens Islamabad', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'Gulberg Residencia Islamabad', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'Park View City Islamabad', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'Capital Smart City', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'Blue World City', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'Top City-1', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'Faisal Town Islamabad', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'Faisal Hills', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'University Town Islamabad', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'Multi Gardens B-17', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'Eighteen Islamabad', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'OPF Housing Scheme Islamabad', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'National Police Foundation Housing Scheme', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'PAF Falcon Complex', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      // Islamabad Towns / Local Areas
+      {'name': 'Bhara Kahu', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'Tarnol', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'Golra', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'Rawat', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'Nilore', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'Koral', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'Sihala', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'Chak Shahzad', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'Banigala', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'Humak', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'Tarlai Kalan', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'Alipur Farash', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'Lehtrar', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      {'name': 'Phulgran', 'image': AppImages.islamabad, 'cityForApi': _isb},
+      // ——— Rawalpindi ———
+      {'name': _rwp, 'image': AppImages.rawalpindi, 'cityForApi': _rwp},
+      // Rawalpindi Major Areas / Colonies
+      {'name': 'Saddar Rawalpindi', 'image': AppImages.rawalpindi, 'cityForApi': _rwp},
+      {'name': 'Raja Bazaar', 'image': AppImages.rawalpindi, 'cityForApi': _rwp},
+      {'name': 'Satellite Town Rawalpindi', 'image': AppImages.rawalpindi, 'cityForApi': _rwp},
+      {'name': 'Chandni Chowk Rawalpindi', 'image': AppImages.rawalpindi, 'cityForApi': _rwp},
+      {'name': 'Committee Chowk', 'image': AppImages.rawalpindi, 'cityForApi': _rwp},
+      {'name': 'Shamsabad', 'image': AppImages.rawalpindi, 'cityForApi': _rwp},
+      {'name': 'Commercial Market Rawalpindi', 'image': AppImages.rawalpindi, 'cityForApi': _rwp},
+      {'name': 'Dhoke Kala Khan', 'image': AppImages.rawalpindi, 'cityForApi': _rwp},
+      {'name': 'Dhoke Hassu', 'image': AppImages.rawalpindi, 'cityForApi': _rwp},
+      {'name': 'Westridge', 'image': AppImages.rawalpindi, 'cityForApi': _rwp},
+      {'name': 'Peshawar Road Rawalpindi', 'image': AppImages.rawalpindi, 'cityForApi': _rwp},
+      {'name': 'Adyala Road', 'image': AppImages.rawalpindi, 'cityForApi': _rwp},
+      {'name': 'Chaklala', 'image': AppImages.rawalpindi, 'cityForApi': _rwp},
+      // Rawalpindi Housing Societies
+      {'name': 'Bahria Town Rawalpindi', 'image': AppImages.rawalpindi, 'cityForApi': _rwp},
+      {'name': 'DHA Rawalpindi', 'image': AppImages.rawalpindi, 'cityForApi': _rwp},
+      {'name': 'Askari Housing Society Rawalpindi', 'image': AppImages.rawalpindi, 'cityForApi': _rwp},
+      {'name': 'Gulraiz Housing Scheme', 'image': AppImages.rawalpindi, 'cityForApi': _rwp},
+      {'name': 'Chaklala Scheme 1', 'image': AppImages.rawalpindi, 'cityForApi': _rwp},
+      {'name': 'Chaklala Scheme 2', 'image': AppImages.rawalpindi, 'cityForApi': _rwp},
+      {'name': 'Airport Housing Society', 'image': AppImages.rawalpindi, 'cityForApi': _rwp},
+      {'name': 'Gulshan Abad Rawalpindi', 'image': AppImages.rawalpindi, 'cityForApi': _rwp},
+      {'name': 'Judicial Colony Rawalpindi', 'image': AppImages.rawalpindi, 'cityForApi': _rwp},
+      {'name': 'Police Foundation Rawalpindi', 'image': AppImages.rawalpindi, 'cityForApi': _rwp},
+      {'name': 'Afshan Colony Rawalpindi', 'image': AppImages.rawalpindi, 'cityForApi': _rwp},
+      {'name': 'Sadiqabad Rawalpindi', 'image': AppImages.rawalpindi, 'cityForApi': _rwp},
+      {'name': 'Khanna Pul', 'image': AppImages.rawalpindi, 'cityForApi': _rwp},
+      // Rawalpindi Towns / Nearby Areas
+      {'name': 'Taxila', 'image': AppImages.rawalpindi, 'cityForApi': _rwp},
+      {'name': 'Wah Cantt', 'image': AppImages.rawalpindi, 'cityForApi': _rwp},
+      {'name': 'Murree', 'image': AppImages.rawalpindi, 'cityForApi': _rwp},
+      {'name': 'Kahuta', 'image': AppImages.rawalpindi, 'cityForApi': _rwp},
+      {'name': 'Kotli Sattian', 'image': AppImages.rawalpindi, 'cityForApi': _rwp},
+      {'name': 'Kallar Syedan', 'image': AppImages.rawalpindi, 'cityForApi': _rwp},
+      {'name': 'Gujar Khan', 'image': AppImages.rawalpindi, 'cityForApi': _rwp},
+    ];
+    final list = widget.showAnyOption
+        ? [
+            {'name': 'Any', 'image': '', 'cityForApi': ''},
+            ...base,
+          ]
+        : base;
+    // Remove duplicate names (keep first occurrence)
+    final seen = <String>{};
+    return list.where((c) => seen.add(c['name']!.trim())).toList();
   }
 
   void _onSearchChanged() {
@@ -90,7 +251,7 @@ class _SearchCityViewState extends State<SearchCityView> {
                   const SizedBox(height: 32),
                   if (_searchController.text.isEmpty) ...[
                     Text(
-                      'Popular Cities',
+                      'Islamabad & Rawalpindi',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -104,12 +265,8 @@ class _SearchCityViewState extends State<SearchCityView> {
                         scrollDirection: Axis.horizontal,
                         physics: const BouncingScrollPhysics(),
                         children: [
-                          _popularCity('Islamabad', AppImages.islamabad),
-                          _popularCity('Karachi', AppImages.karachi),
-                          _popularCity('Lahore', AppImages.lahore),
-                          _popularCity('Faisalabad', AppImages.faisalabad),
-                          _popularCity('Multan', AppImages.multan),
-                          _popularCity('Peshawar', AppImages.peshawar),
+                          _popularCity('Islamabad', AppImages.islamabad, _isb),
+                          _popularCity('Rawalpindi', AppImages.rawalpindi, _rwp),
                         ],
                       ),
                     ),
@@ -120,7 +277,7 @@ class _SearchCityViewState extends State<SearchCityView> {
                     children: [
                       Text(
                         _searchController.text.isEmpty
-                            ? 'All Cities'
+                            ? 'Sectors & Societies'
                             : 'Search Results',
                         style: TextStyle(
                           fontSize: 18,
@@ -138,7 +295,7 @@ class _SearchCityViewState extends State<SearchCityView> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
-                          '${_filteredCities.length} cities',
+                          '${_filteredCities.length} areas',
                           style: TextStyle(
                             color: AppColors.primary,
                             fontSize: 12,
@@ -280,23 +437,15 @@ class _SearchCityViewState extends State<SearchCityView> {
                               speed: const Duration(milliseconds: 100),
                             ),
                             TyperAnimatedText(
-                              'Karachi',
+                              'Rawalpindi',
                               speed: const Duration(milliseconds: 100),
                             ),
                             TyperAnimatedText(
-                              'Lahore',
+                              'F-7',
                               speed: const Duration(milliseconds: 100),
                             ),
                             TyperAnimatedText(
-                              'Faisalabad',
-                              speed: const Duration(milliseconds: 100),
-                            ),
-                            TyperAnimatedText(
-                              'Multan',
-                              speed: const Duration(milliseconds: 100),
-                            ),
-                            TyperAnimatedText(
-                              'Peshawar',
+                              'DHA Islamabad',
                               speed: const Duration(milliseconds: 100),
                             ),
                           ],
@@ -313,11 +462,11 @@ class _SearchCityViewState extends State<SearchCityView> {
     );
   }
 
-  Widget _popularCity(String name, String imagePath) {
+  Widget _popularCity(String name, String imagePath, String cityForApi) {
     final isSelected = widget.selectedCityName == name;
     return GestureDetector(
       onTap: () {
-        widget.onCitySelected(name, imagePath);
+        widget.onCitySelected(name, imagePath, cityForApi);
         Navigator.pop(context);
       },
       child: Container(
@@ -466,7 +615,11 @@ class _SearchCityViewState extends State<SearchCityView> {
                     color: colorScheme.onSurface.withValues(alpha: 0.5),
                   ),
             onTap: () {
-              widget.onCitySelected(city['name']!, city['image']!);
+              widget.onCitySelected(
+                city['name']!,
+                city['image']!,
+                city['cityForApi'] ?? city['name']!,
+              );
               Navigator.pop(context);
             },
           ),

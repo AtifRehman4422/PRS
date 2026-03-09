@@ -148,26 +148,33 @@ class _ForgotPasswordViewState extends ConsumerState<ForgotPasswordView> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    final viewInsets = MediaQuery.of(context).viewInsets;
     final colorScheme = Theme.of(context).colorScheme;
+    // When keyboard opens, shrink height so sheet stays above keyboard and field stays visible
+    final contentHeight = viewInsets.bottom > 0
+        ? (size.height - viewInsets.bottom).clamp(400.0, size.height * 0.78)
+        : size.height * 0.78;
 
-    return Container(
-      height: size.height * 0.78,
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(32),
-          topRight: Radius.circular(32),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.2),
-            blurRadius: 25,
-            spreadRadius: 5,
-            offset: const Offset(0, -8),
+    return Padding(
+      padding: EdgeInsets.only(bottom: viewInsets.bottom),
+      child: Container(
+        height: contentHeight,
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(32),
+            topRight: Radius.circular(32),
           ),
-        ],
-      ),
-      child: Column(
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.2),
+              blurRadius: 25,
+              spreadRadius: 5,
+              offset: const Offset(0, -8),
+            ),
+          ],
+        ),
+        child: Column(
         children: [
           // Top curved header
           Container(
@@ -261,10 +268,15 @@ class _ForgotPasswordViewState extends ConsumerState<ForgotPasswordView> {
             ),
           ),
 
-          // Form content
+          // Form content - scrolls when keyboard is open so field stays visible
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
+              padding: EdgeInsets.only(
+                left: 24,
+                right: 24,
+                bottom: 24 + viewInsets.bottom,
+              ),
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -414,7 +426,7 @@ class _ForgotPasswordViewState extends ConsumerState<ForgotPasswordView> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    SizedBox(height: 20 + viewInsets.bottom),
                   ],
                 ),
               ),
@@ -422,6 +434,7 @@ class _ForgotPasswordViewState extends ConsumerState<ForgotPasswordView> {
           ),
         ],
       ),
+    ),
     );
   }
 }

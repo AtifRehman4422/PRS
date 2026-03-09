@@ -1,20 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'dart:io';
+import 'dart:convert';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:propertyrent/core/app_color/app_colors.dart';
+import 'package:propertyrent/core/constants/api_config.dart';
 import 'package:propertyrent/core/constants/app_images.dart';
 import 'package:propertyrent/core/animations/fade_in_slide.dart';
+import 'package:propertyrent/core/widgets/logo_loader.dart';
+import 'package:propertyrent/data/datasource/listing_api.dart';
+import 'package:propertyrent/data/models/listing_model.dart';
 import 'package:propertyrent/mvvm/views/home/search_city_view.dart';
 import 'package:propertyrent/mvvm/views/add/map_location_picker.dart';
+import 'package:propertyrent/mvvm/viewmodels/auth_viewmodel.dart';
+import 'package:propertyrent/mvvm/views/auth/login_view.dart';
 
-class AddView extends StatefulWidget {
-  const AddView({super.key});
+class AddView extends ConsumerStatefulWidget {
+  /// If set, opens in edit mode: loads listing and saves via update API.
+  final int? listingId;
+
+  const AddView({super.key, this.listingId});
 
   @override
-  State<AddView> createState() => _AddViewState();
+  ConsumerState<AddView> createState() => _AddViewState();
 }
 
-class _AddViewState extends State<AddView> {
+class _AddViewState extends ConsumerState<AddView> {
   final _formKey = GlobalKey<FormState>();
 
   // Property Type
@@ -213,7 +225,10 @@ class _AddViewState extends State<AddView> {
 
   // Add page only - independent from Home page search city
   String _addPageSelectedCity = '';
+  String _addPageSelectedCityForApi = '';
   String? _selectedLocationAddress;
+  double? _selectedLatitude;
+  double? _selectedLongitude;
   // ignore: unused_field - reserved for time slot filter
   final String _selectedTimeSlot = 'Day';
   bool _isNegotiable = false;
@@ -252,17 +267,50 @@ class _AddViewState extends State<AddView> {
   final _descriptionController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _availableFromTimeController = TextEditingController();
   final _hostelInTimeRulesController = TextEditingController();
   final _shopFrontWidthController = TextEditingController();
   final _shopCeilingHeightController = TextEditingController();
   final _farmLandSizeController = TextEditingController();
 
   final List<String> _selectedImages = [];
+  /// In edit mode: image paths from API (to show and optionally keep).
+  List<String> _existingImagePaths = [];
+  /// Indices into _existingImagePaths that user removed (so we don't re-send them).
+  final Set<int> _removedExistingIndices = {};
   final ImagePicker _picker = ImagePicker();
   static const int _maxImages = 6; // Min 1 & max 6 per guideline
 
+  bool _isSaving = false;
+  bool _editLoadComplete = false;
+
+  bool get _isEditMode => widget.listingId != null;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_isEditMode) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _loadForEdit());
+    }
+    final user = ref.read(currentAuthUserProvider);
+    if (user != null) {
+      if (user.email != null && user.email!.isNotEmpty) {
+        _emailController.text = user.email!;
+      }
+      final contact = user.phoneNumber ?? '';
+      if (contact.isNotEmpty) {
+        _phoneController.text = contact;
+        _whatsappController.text = contact;
+      }
+      final displayName = user.displayName ?? '';
+      if (displayName.isNotEmpty) {
+        _ownerNameController.text = displayName;
+      }
+    }
+  }
+
   void _addImage(String path) {
-    if (_selectedImages.length >= _maxImages) return;
+    if (_totalImageCount >= _maxImages) return;
     setState(() {
       _selectedImages.add(path);
     });
@@ -287,7 +335,7 @@ class _AddViewState extends State<AddView> {
   /// Gallery: pick one or multiple images (min 1, max 6 total).
   Future<void> _pickFromGallery() async {
     try {
-      final remaining = _maxImages - _selectedImages.length;
+      final remaining = _maxImages - _totalImageCount;
       if (remaining <= 0) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -304,7 +352,7 @@ class _AddViewState extends State<AddView> {
         final toAdd = files.take(remaining).map((x) => x.path).toList();
         setState(() {
           for (final path in toAdd) {
-            if (_selectedImages.length < _maxImages) _selectedImages.add(path);
+            if (_totalImageCount < _maxImages) _selectedImages.add(path);
           }
         });
         if (mounted) {
@@ -332,7 +380,7 @@ class _AddViewState extends State<AddView> {
   /// Camera: take one photo and add it. Shows in Selected Images above Save.
   Future<void> _pickFromCamera() async {
     try {
-      if (_selectedImages.length >= _maxImages) {
+      if (_totalImageCount >= _maxImages) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -355,6 +403,539 @@ class _AddViewState extends State<AddView> {
             behavior: SnackBarBehavior.floating,
           ),
         );
+      }
+    }
+  }
+
+  Future<void> _pickDate(TextEditingController controller) async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: now,
+      firstDate: DateTime(now.year - 1),
+      lastDate: DateTime(now.year + 5),
+    );
+    if (picked != null) {
+      controller.text = picked.toLocal().toString().split(' ').first;
+    }
+  }
+
+  Future<void> _pickTime(TextEditingController controller) async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+    if (picked != null) {
+      controller.text = picked.format(context);
+    }
+  }
+
+  static bool _toBool(dynamic v) =>
+      v == true || v == 'true' || v == 1 || v == '1';
+
+  Future<void> _loadForEdit() async {
+    if (widget.listingId == null) return;
+    final map = await ListingApi.getListingById(widget.listingId!);
+    if (map == null || !mounted) return;
+    final listing = ListingModel.fromJson(map);
+    final td = listing.typeDetails ?? {};
+    final ext = listing.extras ?? {};
+    setState(() {
+      _selectedPropertyType = listing.propertyType;
+      _titleController.text = listing.title;
+      _descriptionController.text = listing.description ?? '';
+      _areaController.text = listing.areaSize?.toString() ?? '';
+      _rentController.text = listing.rent != null ? listing.rent!.toStringAsFixed(0) : '';
+      _advanceController.text = listing.advanceAmount != null ? listing.advanceAmount!.toStringAsFixed(0) : '';
+      _securityController.text = listing.securityDeposit != null ? listing.securityDeposit!.toStringAsFixed(0) : '';
+      _isNegotiable = listing.isNegotiable;
+      _emailController.text = listing.contactEmail ?? '';
+      _phoneController.text = listing.contactPhone ?? '';
+      _ownerNameController.text = listing.ownerName ?? '';
+      _whatsappController.text = listing.whatsapp ?? '';
+      _sectorController.text = listing.sector ?? '';
+      _landmarkController.text = listing.landmark ?? '';
+      _addPageSelectedCity = listing.city;
+      _addPageSelectedCityForApi = listing.city;
+      _selectedLatitude = listing.latitude;
+      _selectedLongitude = listing.longitude;
+      _selectedLocationAddress = listing.address;
+      _selectedRoom = int.tryParse(ext['rooms']?.toString() ?? '') ?? 0;
+      _selectedBathroom = int.tryParse(ext['bathrooms']?.toString() ?? '') ?? 0;
+      _selectedKitchen = int.tryParse(ext['kitchen']?.toString() ?? '') ?? 0;
+      _selectedTVLounge = int.tryParse(ext['tv_lounge']?.toString() ?? '') ?? 0;
+      _selectedLaundry = _normYesNo(ext['laundry']?.toString());
+      _selectedMess = _normYesNo(ext['mess']?.toString());
+      if (listing.propertyType == 'Hostel') {
+        _selectedHostelType = td['hostel_type']?.toString() ?? 'Boys';
+        _selectedBeds = int.tryParse(td['beds']?.toString() ?? '') ?? 1;
+        _hostelRoomType = td['room_type']?.toString() ?? 'Single';
+        _hostelAvailableFromController.text = td['available_from_date']?.toString() ?? '';
+        _hostelAttachedWashroom = _toBool(td['attached_washroom']);
+        _hostelAc = _toBool(td['ac']);
+        _hostelStudyTable = _toBool(td['study_table']);
+        _hostelWifi = _toBool(td['wifi']);
+        _hostelLaundry = _toBool(td['laundry']);
+        _hostelWater24 = _toBool(td['water_24']);
+        _hostelPowerBackup = _toBool(td['power_backup']);
+        _hostelSecurity = _toBool(td['security']);
+        _hostelFoodIncluded = _toBool(td['food_included']);
+        _hostelPreference = td['preference']?.toString() ?? 'Students';
+        _hostelSmokingAllowed = _toBool(td['smoking_allowed']);
+        _hostelAlcoholAllowed = _toBool(td['alcohol_allowed']);
+        _hostelInTimeRulesController.text = td['in_time_rules']?.toString() ?? '';
+      } else if (listing.propertyType == 'House') {
+        _selectedPortion = td['portion']?.toString() ?? 'Full House';
+        _selectedBHK = td['bhk']?.toString() ?? '1BHK';
+        _selectedFloor = int.tryParse(td['floor']?.toString() ?? '') ?? 1;
+        _houseFurnished = td['furnished']?.toString() ?? 'Unfurnished';
+        _houseAvailableFromController.text = td['available_from_date']?.toString() ?? '';
+        _houseBalcony = _toBool(td['balcony']);
+        _houseModularKitchen = _toBool(td['modular_kitchen']);
+        _houseLift = _toBool(td['lift']);
+        _houseParking = _toBool(td['parking']);
+        _houseWater24 = _toBool(td['water_24']);
+        _housePowerBackup = _toBool(td['power_backup']);
+        _houseSecurity = _toBool(td['security']);
+        _houseGatedSociety = _toBool(td['gated_society']);
+        _housePreference = td['preference']?.toString() ?? 'Family';
+        _housePetsAllowed = _toBool(td['pets_allowed']);
+        _houseVegNonVeg = _toBool(td['veg_non_veg']);
+      } else if (listing.propertyType == 'Flat') {
+        _selectedPortion = td['portion']?.toString() ?? 'Full House';
+        _selectedBHK = td['bhk']?.toString() ?? '1BHK';
+        _selectedFloor = int.tryParse(td['floor']?.toString() ?? '') ?? 1;
+        _houseFurnished = td['furnished']?.toString() ?? 'Unfurnished';
+        _houseAvailableFromController.text = td['available_from_date']?.toString() ?? '';
+        _flatLift = _toBool(td['lift']);
+        _flatBalcony = _toBool(td['balcony']);
+        _flatFurnished = td['furnished']?.toString() ?? 'Unfurnished';
+        _flatGenerator = _toBool(td['generator']);
+        _flatParking = _toBool(td['parking']);
+        _flatModularKitchen = _toBool(td['modular_kitchen']);
+        _flatWater24 = _toBool(td['water_24']);
+        _flatSecurity = _toBool(td['security']);
+        _flatGatedSociety = _toBool(td['gated_society']);
+      } else if (listing.propertyType == 'Shop') {
+        _shopLocation = td['shop_location']?.toString() ?? 'Main Road';
+        _shopFrontWidth = (double.tryParse(td['front_width']?.toString() ?? '') ?? 0);
+        _shopCeilingHeight = (double.tryParse(td['ceiling_height']?.toString() ?? '') ?? 0);
+        _shopFrontType = td['front_type']?.toString() ?? 'Shutter';
+        _shopElectricity = _toBool(td['electricity']);
+        _shopWater = _toBool(td['water']);
+        _shopWashroom = _toBool(td['washroom']);
+        _shopParking = _toBool(td['parking']);
+        _shopSuitableFor = td['suitable_for']?.toString() ?? 'General';
+        _shopAvailableFromController.text = td['available_from_date']?.toString() ?? '';
+      } else if (listing.propertyType == 'Office') {
+        _selectedOfficeFloor = int.tryParse(td['floor']?.toString() ?? '') ?? 1;
+        _officeFurnished = td['furnished']?.toString() ?? 'Unfurnished';
+        _officeCabins = int.tryParse(td['cabins']?.toString() ?? '') ?? 0;
+        _officeWorkstations = int.tryParse(td['workstations']?.toString() ?? '') ?? 0;
+        _officeConferenceRoom = _toBool(td['conference_room']);
+        _officeReception = _toBool(td['reception']);
+        _officeLift = _toBool(td['lift']);
+        _officeParking = _toBool(td['parking']);
+        _officePowerBackup = _toBool(td['power_backup']);
+        _officeInternetReady = _toBool(td['internet_ready']);
+        _officeSecurity = _toBool(td['security']);
+        _officeSuitableFor = td['suitable_for']?.toString() ?? 'IT Company';
+        _officeAvailableFromController.text = td['available_from_date']?.toString() ?? '';
+      } else if (listing.propertyType == 'Marquee') {
+        _maxGuests = int.tryParse(td['max_guests']?.toString() ?? '') ?? 100;
+        _marqueeAc = _toBool(td['ac']);
+        _marqueeStage = _toBool(td['stage']);
+        _marqueeBridalRoom = _toBool(td['bridal_room']);
+        _marqueeParkingCapacity = int.tryParse(td['parking_capacity']?.toString() ?? '') ?? 0;
+        _marqueeGenerator = _toBool(td['generator']);
+        _marqueeDecoration = _toBool(td['decoration']);
+        _marqueeCatering = td['catering']?.toString() ?? 'In-house';
+        _marqueeSuitableFor = td['suitable_for']?.toString() ?? 'Wedding';
+        _rentPerDayController.text = td['rent_per_day']?.toString() ?? '';
+        _rentPerEventController.text = td['rent_per_event']?.toString() ?? '';
+        _advanceController.text = td['advance_amount']?.toString() ?? '';
+        _discountController.text = td['discount']?.toString() ?? '';
+        _maintenanceController.text = td['maintenance']?.toString() ?? '';
+        _securityController.text = td['security_deposit']?.toString() ?? '';
+      } else if (listing.propertyType == 'Guest House') {
+        _guestHouseRooms = int.tryParse(td['rooms']?.toString() ?? '') ?? 1;
+        _guestHouseAc = _toBool(td['ac']);
+        _guestHouseAttachedBathroom = _toBool(td['attached_bathroom']);
+        _guestHouseTv = _toBool(td['tv']);
+        _guestHouseWifi = _toBool(td['wifi']);
+        _guestHouseRoomService = _toBool(td['room_service']);
+        _guestHouseParking = _toBool(td['parking']);
+        _guestHousePowerBackup = _toBool(td['power_backup']);
+        _guestHousePreference = td['preference']?.toString() ?? 'Family';
+        _guestHouseAvailableFromController.text = td['available_from_date']?.toString() ?? '';
+      } else if (listing.propertyType == 'Farm House') {
+        _farmLandSize = double.tryParse(td['land_size']?.toString() ?? '') ?? 0;
+        _farmLawn = _toBool(td['lawn']);
+        _farmGarden = _toBool(td['garden']);
+        _farmRooms = _toBool(td['rooms']);
+        _farmHall = _toBool(td['hall']);
+        _farmSwimmingPool = _toBool(td['swimming_pool']);
+        _farmParking = _toBool(td['parking']);
+        _farmElectricity = _toBool(td['electricity']);
+        _farmWaterSupply = _toBool(td['water_supply']);
+        _farmSuitableFor = td['suitable_for']?.toString() ?? 'Picnic';
+        _farmAvailableFromController.text = td['available_from_date']?.toString() ?? '';
+        _farmLandSizeController.text = td['land_size']?.toString() ?? '';
+      }
+      _availableFromTimeController.text = listing.availableFromTime ?? '';
+      _existingImagePaths = List<String>.from(listing.images);
+      _editLoadComplete = true;
+    });
+  }
+
+  static String _normYesNo(String? v) {
+    if (v == null) return 'No';
+    final s = v.trim().toLowerCase();
+    if (s == 'yes' || s == 'true' || s == '1') return 'Yes';
+    return 'No';
+  }
+
+  /// Count of existing images still shown (not removed).
+  int get _existingKeptCount =>
+      _existingImagePaths.length - _removedExistingIndices.length;
+  /// Total images (existing kept + new) for limit check.
+  int get _totalImageCount => _existingKeptCount + _selectedImages.length;
+
+  void _removeExistingImageAt(int index) {
+    if (index < 0 || index >= _existingImagePaths.length) return;
+    setState(() => _removedExistingIndices.add(index));
+  }
+
+  Future<void> _handleSave() async {
+    if (!_formKey.currentState!.validate()) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please fix the errors in the form'),
+            backgroundColor: Colors.orange,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
+    final totalImages = _isEditMode ? _totalImageCount : _selectedImages.length;
+    if (totalImages < 1) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please add at least 1 image (Camera or Gallery)'),
+            backgroundColor: Colors.orange,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
+    if (_addPageSelectedCity.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please select city'),
+            backgroundColor: Colors.orange,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
+
+    setState(() => _isSaving = true);
+    await Future.delayed(const Duration(milliseconds: 80));
+    if (!mounted) return;
+    try {
+      final authRepo = ref.read(authRepositoryProvider);
+      final token = await authRepo.getAuthToken();
+      if (token == null || token.isEmpty) {
+        if (mounted) {
+          setState(() => _isSaving = false);
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+            builder: (context) => const LoginView(),
+          );
+        }
+        return;
+      }
+
+      final propertyType = _selectedPropertyType;
+      String? typeAvailableDate;
+
+      switch (propertyType) {
+        case 'Hostel':
+          typeAvailableDate = _hostelAvailableFromController.text.trim();
+          break;
+        case 'House':
+        case 'Flat':
+          typeAvailableDate = _houseAvailableFromController.text.trim();
+          break;
+        case 'Shop':
+          typeAvailableDate = _shopAvailableFromController.text.trim();
+          break;
+        case 'Office':
+          typeAvailableDate = _officeAvailableFromController.text.trim();
+          break;
+        case 'Guest House':
+          typeAvailableDate = _guestHouseAvailableFromController.text.trim();
+          break;
+        case 'Farm House':
+          typeAvailableDate = _farmAvailableFromController.text.trim();
+          break;
+      }
+
+      final Map<String, dynamic> typeDetails = {};
+
+      if (propertyType == 'Hostel') {
+        typeDetails.addAll({
+          'hostel_type': _selectedHostelType,
+          'beds': _selectedBeds,
+          'room_type': _hostelRoomType,
+          'attached_washroom': _hostelAttachedWashroom,
+          'ac': _hostelAc,
+          'study_table': _hostelStudyTable,
+          'wifi': _hostelWifi,
+          'laundry': _hostelLaundry,
+          'water_24': _hostelWater24,
+          'power_backup': _hostelPowerBackup,
+          'security': _hostelSecurity,
+          'food_included': _hostelFoodIncluded,
+          'preference': _hostelPreference,
+          'smoking_allowed': _hostelSmokingAllowed,
+          'alcohol_allowed': _hostelAlcoholAllowed,
+          'in_time_rules': _hostelInTimeRulesController.text.trim(),
+          'available_from_date': typeAvailableDate,
+        });
+      } else if (propertyType == 'House' || propertyType == 'Flat') {
+        final isHouse = propertyType == 'House';
+        if (isHouse) {
+          typeDetails.addAll({
+            'portion': _selectedPortion,
+            'bhk': null,
+            'floor': null,
+            'furnished': _houseFurnished,
+            'balcony': _houseBalcony,
+            'modular_kitchen': _houseModularKitchen,
+            'lift': _houseLift,
+            'parking': _houseParking,
+            'water_24': _houseWater24,
+            'power_backup': _housePowerBackup,
+            'security': _houseSecurity,
+            'gated_society': _houseGatedSociety,
+            'preference': _housePreference,
+            'pets_allowed': _housePetsAllowed,
+            'veg_non_veg': _houseVegNonVeg,
+            'available_from_date': typeAvailableDate,
+          });
+        } else {
+          typeDetails.addAll({
+            'portion': null,
+            'bhk': _selectedBHK,
+            'floor': _selectedFloor,
+            'furnished': _flatFurnished,
+            'balcony': _flatBalcony,
+            'lift': _flatLift,
+            'modular_kitchen': _flatModularKitchen,
+            'parking': _flatParking,
+            'water_24': _flatWater24,
+            'power_backup': null,
+            'security': _flatSecurity,
+            'gated_society': _flatGatedSociety,
+            'preference': _housePreference,
+            'pets_allowed': _housePetsAllowed,
+            'veg_non_veg': _houseVegNonVeg,
+            'available_from_date': typeAvailableDate,
+          });
+        }
+      } else if (propertyType == 'Shop') {
+        typeDetails.addAll({
+          'shop_location': _shopLocation,
+          'front_width': _shopFrontWidth.toString(),
+          'ceiling_height': _shopCeilingHeight.toString(),
+          'front_type': _shopFrontType,
+          'electricity': _shopElectricity,
+          'water': _shopWater,
+          'washroom': _shopWashroom,
+          'parking': _shopParking,
+          'suitable_for': _shopSuitableFor,
+          'available_from_date': typeAvailableDate,
+        });
+      } else if (propertyType == 'Office') {
+        typeDetails.addAll({
+          'floor': _selectedOfficeFloor,
+          'furnished': _officeFurnished,
+          'cabins': _officeCabins,
+          'workstations': _officeWorkstations,
+          'conference_room': _officeConferenceRoom,
+          'reception': _officeReception,
+          'lift': _officeLift,
+          'parking': _officeParking,
+          'power_backup': _officePowerBackup,
+          'internet_ready': _officeInternetReady,
+          'security': _officeSecurity,
+          'suitable_for': _officeSuitableFor,
+          'available_from_date': typeAvailableDate,
+        });
+      } else if (propertyType == 'Marquee') {
+        typeDetails.addAll({
+          'max_guests': _maxGuests,
+          'ac': _marqueeAc,
+          'stage': _marqueeStage,
+          'bridal_room': _marqueeBridalRoom,
+          'parking_capacity': _marqueeParkingCapacity,
+          'generator': _marqueeGenerator,
+          'decoration': _marqueeDecoration,
+          'catering': _marqueeCatering,
+          'suitable_for': _marqueeSuitableFor,
+          'rent_per_day': _rentPerDayController.text.trim(),
+          'rent_per_event': _rentPerEventController.text.trim(),
+          'advance_amount': _advanceController.text.trim(),
+          'discount': _discountController.text.trim(),
+          'maintenance': _maintenanceController.text.trim(),
+          'security_deposit': _securityController.text.trim(),
+        });
+      } else if (propertyType == 'Guest House') {
+        typeDetails.addAll({
+          'rooms': _guestHouseRooms,
+          'ac': _guestHouseAc,
+          'attached_bathroom': _guestHouseAttachedBathroom,
+          'tv': _guestHouseTv,
+          'wifi': _guestHouseWifi,
+          'room_service': _guestHouseRoomService,
+          'parking': _guestHouseParking,
+          'power_backup': _guestHousePowerBackup,
+          'preference': _guestHousePreference,
+          'available_from_date': typeAvailableDate,
+        });
+      } else if (propertyType == 'Farm House') {
+        typeDetails.addAll({
+          'land_size': _farmLandSize.toString(),
+          'lawn': _farmLawn,
+          'garden': _farmGarden,
+          'rooms': _farmRooms,
+          'hall': _farmHall,
+          'swimming_pool': _farmSwimmingPool,
+          'parking': _farmParking,
+          'electricity': _farmElectricity,
+          'water_supply': _farmWaterSupply,
+          'suitable_for': _farmSuitableFor,
+          'available_from_date': typeAvailableDate,
+        });
+      }
+
+      final fields = <String, String>{
+        'property_type': propertyType,
+        'city': _addPageSelectedCityForApi.isNotEmpty ? _addPageSelectedCityForApi : _addPageSelectedCity,
+        'address': _selectedLocationAddress ?? '',
+        'latitude': _selectedLatitude?.toString() ?? '',
+        'longitude': _selectedLongitude?.toString() ?? '',
+        'title': _titleController.text.trim(),
+        'description': _descriptionController.text.trim(),
+        'area_size': _areaController.text.trim(),
+        'area_unit': _selectedAreaUnit,
+        'rent': _rentController.text.trim(),
+        'advance_amount': _advanceController.text.trim(),
+        'security_deposit': _securityController.text.trim(),
+        'is_negotiable': _isNegotiable.toString(),
+        'available_from': typeAvailableDate ?? '',
+        'available_from_time': _availableFromTimeController.text.trim(),
+        'contact_email': _emailController.text.trim(),
+        'contact_phone': _phoneController.text.trim(),
+        'owner_name': _ownerNameController.text.trim(),
+        'whatsapp': _whatsappController.text.trim(),
+        'sector': _sectorController.text.trim(),
+        'landmark': _landmarkController.text.trim(),
+        'laundry': _selectedLaundry,
+        'mess': _selectedMess,
+        'rooms': _selectedRoom.toString(),
+        'bathrooms': _selectedBathroom.toString(),
+        'kitchen': _selectedKitchen.toString(),
+        'tv_lounge': _selectedTVLounge.toString(),
+        if (typeDetails.isNotEmpty) 'type_details': jsonEncode(typeDetails),
+      };
+
+      final existingToKeep = _isEditMode
+          ? [
+              for (int i = 0; i < _existingImagePaths.length; i++)
+                if (!_removedExistingIndices.contains(i)) _existingImagePaths[i],
+            ]
+          : <String>[];
+      final result = _isEditMode
+          ? await ListingApi.updateListing(
+              token: token,
+              listingId: widget.listingId!,
+              fields: fields,
+              existingImagePaths: existingToKeep,
+              images: _selectedImages,
+            )
+          : await ListingApi.createListing(
+              token: token,
+              fields: fields,
+              images: _selectedImages,
+            );
+
+      if (!mounted) return;
+
+      if (result.success) {
+        final isEdit = _isEditMode;
+        if (!isEdit) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Row(
+                children: [
+                  Icon(Icons.check_circle, color: Colors.white, size: 22),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Ad saved successfully!',
+                      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 2),
+              margin: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          );
+        }
+        Navigator.of(context).pop(true);
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result.message ?? 'Failed to save. Please try again.'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 3),
+          margin: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+    } on Exception catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString().replaceFirst('Exception: ', '')}'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
       }
     }
   }
@@ -387,6 +968,7 @@ class _AddViewState extends State<AddView> {
     _shopFrontWidthController.dispose();
     _shopCeilingHeightController.dispose();
     _farmLandSizeController.dispose();
+    _availableFromTimeController.dispose();
     super.dispose();
   }
 
@@ -413,7 +995,9 @@ class _AddViewState extends State<AddView> {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: SafeArea(
-        child: Form(
+        child: _isEditMode && !_editLoadComplete
+            ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+            : Form(
           key: _formKey,
           child: Column(
             children: [
@@ -644,6 +1228,10 @@ class _AddViewState extends State<AddView> {
                               'Enter WhatsApp number',
                               'WhatsApp required',
                               TextInputType.phone,
+                              [
+                                FilteringTextInputFormatter.digitsOnly,
+                                LengthLimitingTextInputFormatter(11),
+                              ],
                             ),
                             _buildDivider(),
                             _buildSectionTitle(Icons.phone, 'Contact Number'),
@@ -653,6 +1241,10 @@ class _AddViewState extends State<AddView> {
                               'Enter phone number',
                               'Phone required',
                               TextInputType.phone,
+                              [
+                                FilteringTextInputFormatter.digitsOnly,
+                                LengthLimitingTextInputFormatter(11),
+                              ],
                             ),
                             _buildDivider(),
                           ],
@@ -976,11 +1568,14 @@ class _AddViewState extends State<AddView> {
 
                 _buildSectionTitle(Icons.calendar_today, 'Available From'),
                 const SizedBox(height: 8),
-                _buildTextField(
+                _buildDatePickerField(
                   _hostelAvailableFromController,
                   'Select date',
-                  '',
-                  TextInputType.datetime,
+                ),
+                const SizedBox(height: 12),
+                _buildTimePickerField(
+                  _availableFromTimeController,
+                  'Select time (optional)',
                 ),
                 _buildDivider(),
               ],
@@ -1142,11 +1737,14 @@ class _AddViewState extends State<AddView> {
 
                 _buildSectionTitle(Icons.calendar_today, 'Available From'),
                 const SizedBox(height: 8),
-                _buildTextField(
+                _buildDatePickerField(
                   _houseAvailableFromController,
                   'Select date',
-                  '',
-                  TextInputType.datetime,
+                ),
+                const SizedBox(height: 12),
+                _buildTimePickerField(
+                  _availableFromTimeController,
+                  'Select time (optional)',
                 ),
                 _buildDivider(),
               ],
@@ -1255,11 +1853,14 @@ class _AddViewState extends State<AddView> {
 
                 _buildSectionTitle(Icons.calendar_today, 'Available From'),
                 const SizedBox(height: 8),
-                _buildTextField(
+                _buildDatePickerField(
                   _shopAvailableFromController,
                   'Select date',
-                  '',
-                  TextInputType.datetime,
+                ),
+                const SizedBox(height: 12),
+                _buildTimePickerField(
+                  _availableFromTimeController,
+                  'Select time (optional)',
                 ),
                 _buildDivider(),
               ],
@@ -1358,11 +1959,14 @@ class _AddViewState extends State<AddView> {
 
                 _buildSectionTitle(Icons.calendar_today, 'Available From'),
                 const SizedBox(height: 8),
-                _buildTextField(
+                _buildDatePickerField(
                   _officeAvailableFromController,
                   'Select date',
-                  '',
-                  TextInputType.datetime,
+                ),
+                const SizedBox(height: 12),
+                _buildTimePickerField(
+                  _availableFromTimeController,
+                  'Select time (optional)',
                 ),
                 _buildDivider(),
               ],
@@ -1524,11 +2128,14 @@ class _AddViewState extends State<AddView> {
 
                 _buildSectionTitle(Icons.calendar_today, 'Available From'),
                 const SizedBox(height: 8),
-                _buildTextField(
+                _buildDatePickerField(
                   _guestHouseAvailableFromController,
                   'Select date',
-                  '',
-                  TextInputType.datetime,
+                ),
+                const SizedBox(height: 12),
+                _buildTimePickerField(
+                  _availableFromTimeController,
+                  'Select time (optional)',
                 ),
                 _buildDivider(),
               ],
@@ -1619,11 +2226,14 @@ class _AddViewState extends State<AddView> {
 
                 _buildSectionTitle(Icons.calendar_today, 'Available From'),
                 const SizedBox(height: 8),
-                _buildTextField(
+                _buildDatePickerField(
                   _farmAvailableFromController,
                   'Select date',
-                  '',
-                  TextInputType.datetime,
+                ),
+                const SizedBox(height: 12),
+                _buildTimePickerField(
+                  _availableFromTimeController,
+                  'Select time (optional)',
                 ),
                 _buildDivider(),
               ],
@@ -2069,8 +2679,11 @@ class _AddViewState extends State<AddView> {
             ),
             child: SearchCityView(
               selectedCityName: _addPageSelectedCity,
-              onCitySelected: (name, imagePath) {
-                setState(() => _addPageSelectedCity = name);
+              onCitySelected: (name, imagePath, cityForApi) {
+                setState(() {
+                  _addPageSelectedCity = name;
+                  _addPageSelectedCityForApi = cityForApi;
+                });
               },
             ),
           ),
@@ -2107,11 +2720,17 @@ class _AddViewState extends State<AddView> {
   }
 
   Future<void> _openMapsAndSetAddress() async {
-    final address = await MapLocationPicker.open(
+    final result = await MapLocationPicker.open(
       context,
       initialAddress: _selectedLocationAddress,
     );
-    if (address != null && mounted) setState(() => _selectedLocationAddress = address);
+    if (result != null && mounted) {
+      setState(() {
+        _selectedLocationAddress = result['address'] as String?;
+        _selectedLatitude = result['latitude'] as double?;
+        _selectedLongitude = result['longitude'] as double?;
+      });
+    }
   }
 
   Widget _buildLocationSelector() {
@@ -2129,16 +2748,35 @@ class _AddViewState extends State<AddView> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Expanded(
-              child: Text(
-                _selectedLocationAddress ?? 'Select Location',
-                style: TextStyle(
-                  color: _selectedLocationAddress != null
-                      ? colorScheme.onSurface
-                      : colorScheme.onSurface.withValues(alpha: 0.6),
-                  fontSize: 16,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    _selectedLocationAddress ?? 'Select Location',
+                    style: TextStyle(
+                      color: _selectedLocationAddress != null
+                          ? colorScheme.onSurface
+                          : colorScheme.onSurface.withValues(alpha: 0.6),
+                      fontSize: 16,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (_selectedLatitude != null && _selectedLongitude != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        '${_selectedLatitude!.toStringAsFixed(5)}, ${_selectedLongitude!.toStringAsFixed(5)}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: colorScheme.onSurface.withValues(alpha: 0.6),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                ],
               ),
             ),
             _gradientIcon(
@@ -2207,6 +2845,7 @@ class _AddViewState extends State<AddView> {
     String hint,
     String errorText, [
     TextInputType? keyboardType,
+    List<TextInputFormatter>? inputFormatters,
   ]) {
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
@@ -2219,6 +2858,7 @@ class _AddViewState extends State<AddView> {
       child: TextFormField(
         controller: controller,
         keyboardType: keyboardType,
+        inputFormatters: inputFormatters,
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.5)),
@@ -2256,6 +2896,80 @@ class _AddViewState extends State<AddView> {
         validator: (value) {
           if (value == null || value.isEmpty) {
             return 'Property Description required';
+          }
+          return null;
+        },
+      ),
+    );
+  }
+
+  Widget _buildDatePickerField(
+    TextEditingController controller,
+    String hint, {
+    String? errorText,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.3)),
+      ),
+      child: TextFormField(
+        controller: controller,
+        readOnly: true,
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: TextStyle(
+            color: colorScheme.onSurface.withValues(alpha: 0.5),
+          ),
+          border: InputBorder.none,
+          suffixIcon: const Icon(Icons.calendar_today, size: 20),
+        ),
+        onTap: () => _pickDate(controller),
+        validator: (value) {
+          if (errorText != null &&
+              errorText.isNotEmpty &&
+              (value == null || value.isEmpty)) {
+            return errorText;
+          }
+          return null;
+        },
+      ),
+    );
+  }
+
+  Widget _buildTimePickerField(
+    TextEditingController controller,
+    String hint, {
+    String? errorText,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.3)),
+      ),
+      child: TextFormField(
+        controller: controller,
+        readOnly: true,
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: TextStyle(
+            color: colorScheme.onSurface.withValues(alpha: 0.5),
+          ),
+          border: InputBorder.none,
+          suffixIcon: const Icon(Icons.access_time, size: 20),
+        ),
+        onTap: () => _pickTime(controller),
+        validator: (value) {
+          if (errorText != null &&
+              errorText.isNotEmpty &&
+              (value == null || value.isEmpty)) {
+            return errorText;
           }
           return null;
         },
@@ -2380,47 +3094,101 @@ class _AddViewState extends State<AddView> {
   }
 
   Widget _buildSelectedImagesRow() {
-    if (_selectedImages.isEmpty) return const SizedBox.shrink();
+    final existingCount = _existingImagePaths.length - _removedExistingIndices.length;
+    final totalCount = existingCount + _selectedImages.length;
+    if (totalCount == 0) return const SizedBox.shrink();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle(Icons.collections, 'Selected Images'),
+        _buildSectionTitle(
+          Icons.collections,
+          _isEditMode ? 'Images (${totalCount}/$_maxImages)' : 'Selected Images',
+        ),
         const SizedBox(height: 8),
         SizedBox(
           height: 72,
-          child: ListView.separated(
+          child: ListView(
             scrollDirection: Axis.horizontal,
-            itemCount: _selectedImages.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
-            itemBuilder: (context, index) {
-              final path = _selectedImages[index];
-              return Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: (path.startsWith('assets/')
-                        ? Image.asset(path, width: 72, height: 72, fit: BoxFit.cover)
-                        : Image.file(File(path), width: 72, height: 72, fit: BoxFit.cover)),
-                  ),
-                  Positioned(
-                    top: -6,
-                    right: -6,
-                    child: GestureDetector(
-                      onTap: () => _removeImageAt(index),
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.6),
-                          shape: BoxShape.circle,
+            children: [
+              // Existing images from API (edit mode)
+              ...List.generate(_existingImagePaths.length, (index) {
+                if (_removedExistingIndices.contains(index)) return const SizedBox.shrink();
+                final path = _existingImagePaths[index];
+                final url = path.startsWith('http') ? path : uploadsUrl('/$path');
+                return Padding(
+                  padding: EdgeInsets.only(right: index < _existingImagePaths.length - 1 ? 12 : 0),
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.network(
+                          url,
+                          width: 72,
+                          height: 72,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            width: 72,
+                            height: 72,
+                            color: Colors.grey.shade300,
+                            child: const Icon(Icons.broken_image),
+                          ),
                         ),
-                        child: const Icon(Icons.close, size: 14, color: Colors.white),
                       ),
-                    ),
+                      Positioned(
+                        top: -6,
+                        right: -6,
+                        child: GestureDetector(
+                          onTap: () => _removeExistingImageAt(index),
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.6),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.close, size: 14, color: Colors.white),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              );
-            },
+                );
+              }),
+              if (_existingImagePaths.isNotEmpty && _selectedImages.isNotEmpty) const SizedBox(width: 12),
+              // Newly picked images
+              ...List.generate(_selectedImages.length, (index) {
+                final path = _selectedImages[index];
+                return Padding(
+                  padding: EdgeInsets.only(right: index < _selectedImages.length - 1 ? 12 : 0),
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: (path.startsWith('assets/')
+                            ? Image.asset(path, width: 72, height: 72, fit: BoxFit.cover)
+                            : Image.file(File(path), width: 72, height: 72, fit: BoxFit.cover)),
+                      ),
+                      Positioned(
+                        top: -6,
+                        right: -6,
+                        child: GestureDetector(
+                          onTap: () => _removeImageAt(index),
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withValues(alpha: 0.6),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.close, size: 14, color: Colors.white),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            ],
           ),
         ),
         const SizedBox(height: 16),
@@ -2435,27 +3203,7 @@ class _AddViewState extends State<AddView> {
       width: double.infinity,
       height: 56,
       child: ElevatedButton(
-        onPressed: () {
-          if (!_formKey.currentState!.validate()) return;
-          if (_selectedImages.isEmpty) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text('Please add at least 1 image (Camera or Gallery)'),
-                backgroundColor: Colors.orange,
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
-            return;
-          }
-          // TODO: upload _selectedImages and form data to backend
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Ad posted successfully!'),
-              backgroundColor: AppColors.primary,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        },
+        onPressed: _isSaving ? null : _handleSave,
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
@@ -2464,10 +3212,12 @@ class _AddViewState extends State<AddView> {
           ),
           elevation: 4,
         ),
-        child: const Text(
-          'Save',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
+        child: _isSaving
+            ? const LogoLoader(size: 28)
+            : Text(
+                _isEditMode ? 'Save Changes' : 'Save',
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
       ),
     );
   }

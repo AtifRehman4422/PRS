@@ -8,6 +8,12 @@ class PropertyCard extends StatefulWidget {
   final String title;
   final String location;
   final String subLocation;
+  /// Optional: address/sector/landmark from DB shown with icon below location
+  final String? addressLine;
+  /// When set, show City row then Location row with colored icons (for category listing).
+  final String? cityDisplay;
+  /// When set, show these 3 feature chips below city/location (for category listing).
+  final List<Widget>? topFeatureChips;
   final String price;
   final int bedrooms;
   final int bathrooms;
@@ -16,15 +22,26 @@ class PropertyCard extends StatefulWidget {
   final bool compact;
   final bool showBadges;
   final bool isFavorite;
+  final VoidCallback? onFavoriteTap;
   final bool isOwner;
   final String statusText;
   final Color statusColor;
+  final bool showFeaturesRow;
+  final VoidCallback? onCallTap;
+  final VoidCallback? onWhatsAppTap;
+  final VoidCallback? onEditTap;
+  final VoidCallback? onDeleteTap;
+  /// ISO date-time string from API (e.g. created_at). Used for "1 day", "2 days" badge.
+  final String? createdAt;
 
   const PropertyCard({
     super.key,
     required this.title,
     required this.location,
     required this.subLocation,
+    this.addressLine,
+    this.cityDisplay,
+    this.topFeatureChips,
     required this.price,
     required this.bedrooms,
     required this.bathrooms,
@@ -33,9 +50,16 @@ class PropertyCard extends StatefulWidget {
     this.compact = false,
     this.showBadges = true,
     this.isFavorite = false,
+    this.onFavoriteTap,
     this.isOwner = false,
     this.statusText = 'Active',
     this.statusColor = Colors.red,
+    this.showFeaturesRow = true,
+    this.onCallTap,
+    this.onWhatsAppTap,
+    this.onEditTap,
+    this.onDeleteTap,
+    this.createdAt,
   });
 
   @override
@@ -77,6 +101,24 @@ class _PropertyCardState extends State<PropertyCard> {
     _timer?.cancel();
   }
 
+  /// Returns relative time string: "Just now", "1 day", "2 days", etc.
+  static String _relativeTime(String? isoDate) {
+    if (isoDate == null || isoDate.isEmpty) return 'Just now';
+    final d = DateTime.tryParse(isoDate);
+    if (d == null) return 'Just now';
+    final now = DateTime.now();
+    final diff = now.difference(d);
+    if (diff.inMinutes < 1) return 'Just now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes} min';
+    if (diff.inHours < 24) return '${diff.inHours} hr';
+    if (diff.inDays == 1) return '1 day';
+    if (diff.inDays < 30) return '${diff.inDays} days';
+    if (diff.inDays < 60) return '1 month';
+    if (diff.inDays < 365) return '${(diff.inDays / 30).floor()} months';
+    if (diff.inDays < 730) return '1 year';
+    return '${(diff.inDays / 365).floor()} years';
+  }
+
   @override
   void dispose() {
     _stopAutoSlide();
@@ -100,6 +142,28 @@ class _PropertyCardState extends State<PropertyCard> {
           border: Border.all(color: color.withValues(alpha: 0.2)),
         ),
         child: Icon(icon, color: color, size: 20),
+      ),
+    );
+  }
+
+  Widget _buildWhatsAppButton({required VoidCallback onTap}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+        ),
+        child: Image.asset(
+          AppImages.whatsapp,
+          width: 20,
+          height: 20,
+          fit: BoxFit.contain,
+          errorBuilder: (_, __, ___) => Icon(Icons.chat, color: Colors.green, size: 20),
+        ),
       ),
     );
   }
@@ -176,8 +240,28 @@ class _PropertyCardState extends State<PropertyCard> {
                         });
                       },
                       itemBuilder: (context, index) {
+                        final url = widget.images[index];
+                        final isNetwork = url.startsWith('http');
+                        if (isNetwork) {
+                          return Image.network(
+                            url,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                color: colorScheme.surfaceContainerHighest,
+                                child: Center(
+                                  child: Icon(
+                                    Icons.broken_image,
+                                    color: colorScheme.onSurface.withValues(alpha: 0.4),
+                                    size: 40,
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        }
                         return Image.asset(
-                          widget.images[index],
+                          url,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) {
                             return Container(
@@ -294,17 +378,18 @@ class _PropertyCardState extends State<PropertyCard> {
                           color: Colors.black.withValues(alpha: 0.3),
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        child: const Row(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.access_time,
                               color: Colors.white,
                               size: 14,
                             ),
-                            SizedBox(width: 6),
+                            const SizedBox(width: 6),
                             Text(
-                              'Just now',
-                              style: TextStyle(
+                              _relativeTime(widget.createdAt),
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w500,
                                 fontSize: 12,
@@ -344,28 +429,108 @@ class _PropertyCardState extends State<PropertyCard> {
                               color: colorScheme.onSurface,
                             ),
                           ),
-                          const SizedBox(height: 6),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.location_on_outlined,
-                                size: 16,
-                                color: colorScheme.onSurface.withValues(alpha: 0.7),
-                              ),
-                              const SizedBox(width: 4),
-                              Expanded(
-                                child: Text(
-                                  '${widget.location}, ${widget.subLocation}',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: colorScheme.onSurface.withValues(alpha: 0.7),
+                          if (widget.cityDisplay != null && widget.cityDisplay!.isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.location_city,
+                                  size: 16,
+                                  color: AppColors.primary,
+                                ),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                  child: Text(
+                                    widget.cityDisplay!,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: colorScheme.onSurface.withValues(alpha: 0.85),
+                                    ),
                                   ),
                                 ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.place_outlined,
+                                  size: 16,
+                                  color: AppColors.primary,
+                                ),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                  child: Text(
+                                    widget.addressLine ?? widget.subLocation,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: colorScheme.onSurface.withValues(alpha: 0.7),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if (widget.topFeatureChips != null && widget.topFeatureChips!.isNotEmpty) ...[
+                              const SizedBox(height: 8),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 6,
+                                children: widget.topFeatureChips!,
                               ),
                             ],
-                          ),
+                          ] else ...[
+                            const SizedBox(height: 6),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.location_on_outlined,
+                                  size: 16,
+                                  color: colorScheme.onSurface.withValues(alpha: 0.7),
+                                ),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                  child: Text(
+                                    '${widget.location}, ${widget.subLocation}',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: colorScheme.onSurface.withValues(alpha: 0.7),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if (widget.addressLine != null && widget.addressLine!.isNotEmpty) ...[
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.place_outlined,
+                                    size: 14,
+                                    color: colorScheme.onSurface.withValues(alpha: 0.6),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: Text(
+                                      widget.addressLine!,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: colorScheme.onSurface.withValues(alpha: 0.6),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ],
                         ],
                       ),
                     ),
@@ -375,7 +540,7 @@ class _PropertyCardState extends State<PropertyCard> {
                 const SizedBox(height: 12),
 
                 // Features
-                if (!widget.compact)
+                if (!widget.compact && widget.showFeaturesRow)
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
@@ -391,13 +556,11 @@ class _PropertyCardState extends State<PropertyCard> {
                           Icons.bathtub_outlined,
                           '${widget.bathrooms} Baths',
                         ),
-                        const SizedBox(width: 12),
-                        _buildFeatureChip(context, Icons.square_foot, '1200 sqft'),
                       ],
                     ),
                   ),
 
-                if (!widget.compact)
+                if (!widget.compact && widget.showFeaturesRow)
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 12),
                     child: Divider(height: 1),
@@ -455,56 +618,30 @@ class _PropertyCardState extends State<PropertyCard> {
                                   icon: Icons.delete_outline,
                                   label: 'Delete',
                                   color: Colors.red,
-                                  onTap: () {},
+                                  onTap: widget.onDeleteTap ?? () {},
                                 ),
                                 const SizedBox(width: 12),
                                 _buildOwnerActionButton(
                                   icon: Icons.edit_outlined,
                                   label: 'Edit',
                                   color: AppColors.primary,
-                                  onTap: () {},
+                                  onTap: widget.onEditTap ?? () {},
                                 ),
                               ]
                             : [
                                 _buildActionButton(
                                   icon: widget.isFavorite ? Icons.favorite : Icons.favorite_border,
-                                  color: widget.isFavorite ? Colors.red : Colors.grey,
-                                  onTap: () {},
+                                  color: widget.isFavorite ? AppColors.primary : Colors.grey,
+                                  onTap: widget.onFavoriteTap ?? () {},
                                 ),
+                                const SizedBox(width: 12),
+                                if (widget.onWhatsAppTap != null)
+                                  _buildWhatsAppButton(onTap: widget.onWhatsAppTap!),
                                 const SizedBox(width: 12),
                                 _buildActionButton(
-                                  icon: Icons.chat_bubble_outline,
-                                  color: Colors.blue,
-                                  onTap: () {},
-                                ),
-                                const SizedBox(width: 12),
-                                Container(
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primary,
-                                    borderRadius: BorderRadius.circular(12),
-                                    boxShadow: [
-                                      BoxShadow(
-                              color: AppColors.primary.withValues(alpha: 0.3),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 4),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Material(
-                                    color: Colors.transparent,
-                                    child: InkWell(
-                                      onTap: () {},
-                                      borderRadius: BorderRadius.circular(12),
-                                      child: const Padding(
-                                        padding: EdgeInsets.all(10),
-                                        child: Icon(
-                                          Icons.call,
-                                          color: Colors.white,
-                                          size: 20,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
+                                  icon: Icons.call,
+                                  color: AppColors.primary,
+                                  onTap: widget.onCallTap ?? () {},
                                 ),
                               ],
                       ),

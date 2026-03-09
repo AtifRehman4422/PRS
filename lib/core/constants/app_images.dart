@@ -22,4 +22,10 @@ class AppImages {
   static const String lahore = '$_base/lahore.jpg';
   static const String multan = '$_base/multan.jpg';
   static const String peshawar = '$_base/peshawar.jpg';
+  static const String rawalpindi = '$_base/rawalpindi.png';
+
+  /// Google logo for Sign in with Google button (login).
+  static const String google = '$_base/google.png';
+  /// WhatsApp icon for WhatsApp contact button (listings).
+  static const String whatsapp = '$_base/whatsapp.png';
 }

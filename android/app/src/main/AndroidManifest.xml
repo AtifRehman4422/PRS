@@ -1,6 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Map tiles and geocoding -->
+    <!-- Map tiles, geocoding, current location -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <!-- Camera and gallery for Add page image upload -->
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
@@ -37,10 +39,10 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
-        <!-- Google Maps: enable Maps SDK for Android in Cloud Console if map is blank -->
+        <!-- Google Maps API key: Maps SDK for Android must be enabled in Google Cloud Console -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyDqktEIQqNO1cL04cZOf8zPJ9X9hc0O6mA"/>
+            android:value="AIzaSyBpGKLtD0L4QvFfWSUqlcmtys7GhVolRiI"/>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

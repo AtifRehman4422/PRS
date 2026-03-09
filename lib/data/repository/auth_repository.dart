@@ -118,4 +118,15 @@ class AuthRepository {
     final profile = await AuthApi.getProfile(token);
     if (profile != null) _authStateController.add(profile.toAuthUser());
   }
+
+  /// Re-fetch profile and emit updated user so whole app (drawer, profile page) shows new name/photo.
+  Future<void> refreshUser() async {
+    final token = await _getToken();
+    if (token == null || token.isEmpty) return;
+    final profile = await AuthApi.getProfile(token);
+    if (profile != null) _authStateController.add(profile.toAuthUser());
+  }
+
+  /// Expose token for other API calls (e.g. listings).
+  Future<String?> getAuthToken() => _getToken();
 }

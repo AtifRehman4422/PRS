@@ -1,12 +1,14 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:propertyrent/core/app_color/app_colors.dart';
+import 'package:propertyrent/data/datasource/place_autocomplete_api.dart';
 
-/// One search result: lat/lng + display address.
-class _SearchResult {
-  const _SearchResult({required this.latLng, required this.address});
+/// Fallback when Place Autocomplete returns no results (e.g. PWD, sector names).
+class _GeocodeSuggestion {
+  const _GeocodeSuggestion({required this.latLng, required this.address});
   final LatLng latLng;
   final String address;
 }
@@ -21,9 +23,9 @@ class MapLocationPicker extends StatefulWidget {
 
   final String? initialAddress;
 
-  /// Returns selected address when user taps Save; null if cancelled.
-  static Future<String?> open(BuildContext context, {String? initialAddress}) async {
-    return Navigator.of(context).push<String>(
+  /// Returns { address, latitude, longitude } when user taps Save; null if cancelled.
+  static Future<Map<String, dynamic>?> open(BuildContext context, {String? initialAddress}) async {
+    return Navigator.of(context).push<Map<String, dynamic>>(
       MaterialPageRoute(
         builder: (_) => MapLocationPicker(initialAddress: initialAddress),
         fullscreenDialog: true,
@@ -36,7 +38,7 @@ class MapLocationPicker extends StatefulWidget {
 }
 
 class _MapLocationPickerState extends State<MapLocationPicker> {
-  static const LatLng _defaultCenter = LatLng(31.5204, 74.3587); // Lahore, Pakistan
+  static const LatLng _defaultCenter = LatLng(33.6844, 73.0479); // Islamabad area fallback
 
   final TextEditingController _addressController = TextEditingController();
   final Completer<GoogleMapController> _mapController = Completer<GoogleMapController>();
@@ -46,48 +48,75 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
   bool _isLoadingAddress = false;
   bool _isSearching = false;
   String? _searchError;
-  List<_SearchResult> _suggestions = [];
+  List<PlacePrediction> _placeSuggestions = [];
+  List<_GeocodeSuggestion> _geocodeSuggestions = [];
   bool _mapCreated = false;
+  bool _isProgrammaticUpdate = false;
+  Timer? _debounceTimer;
 
   @override
   void initState() {
     super.initState();
     if (widget.initialAddress != null && widget.initialAddress!.trim().isNotEmpty) {
+      _isProgrammaticUpdate = true;
       _addressController.text = widget.initialAddress!.trim();
       _currentAddress = widget.initialAddress!.trim();
       _searchByAddress(widget.initialAddress!.trim());
     } else {
-      _currentAddress = 'Lahore, Pakistan';
-      _addressController.text = _currentAddress;
-      _reverseGeocode(_defaultCenter);
+      _addressController.clear();
+      _getCurrentLocationAndCenter();
     }
+    _addressController.addListener(_onAddressTextChanged);
   }
 
-  @override
-  void dispose() {
-    _addressController.dispose();
-    super.dispose();
+  void _onAddressTextChanged() {
+    if (_isProgrammaticUpdate) return;
+    _debounceTimer?.cancel();
+    final query = _addressController.text.trim();
+    if (query.length < 2) {
+      setState(() {
+        _placeSuggestions = [];
+        _geocodeSuggestions = [];
+        _searchError = null;
+      });
+      return;
+    }
+    _debounceTimer = Timer(const Duration(milliseconds: 400), () {
+      _fetchPlaceSuggestions(query);
+    });
   }
 
-  Future<void> _searchByAddress(String query) async {
+  Future<void> _fetchPlaceSuggestions(String query) async {
     if (query.trim().isEmpty) return;
     setState(() {
       _isSearching = true;
       _searchError = null;
-      _suggestions = [];
+      _placeSuggestions = [];
+      _geocodeSuggestions = [];
     });
     try {
+      // 1) Try Google Place Autocomplete first
+      var list = await PlaceAutocompleteApi.getSuggestions(query.trim());
+      if (!mounted) return;
+      if (list.isNotEmpty) {
+        setState(() {
+          _placeSuggestions = list;
+          _geocodeSuggestions = [];
+          _isSearching = false;
+        });
+        return;
+      }
+      // 2) Fallback: Geocoding API (PWD, sector names, areas jo Place me nahi milte)
       final locations = await locationFromAddress(query.trim());
       if (!mounted) return;
       if (locations.isEmpty) {
         setState(() {
           _isSearching = false;
-          _searchError = 'Address not found. Try different words (e.g. city, area).';
+          _searchError = 'Koi location nahi mili. Alag naam try karein (e.g. PWD Islamabad).';
         });
         return;
       }
-      // Build suggestions with reverse-geocoded addresses (max 5)
-      final results = <_SearchResult>[];
+      final results = <_GeocodeSuggestion>[];
       for (var i = 0; i < locations.length && i < 5; i++) {
         final loc = locations[i];
         final latLng = LatLng(loc.latitude, loc.longitude);
@@ -102,47 +131,195 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
                 .join(', ');
           }
         } catch (_) {}
-        results.add(_SearchResult(latLng: latLng, address: address));
+        results.add(_GeocodeSuggestion(latLng: latLng, address: address));
       }
       if (!mounted) return;
-      if (results.length == 1) {
-        final controller = await _mapController.future;
-        await controller.animateCamera(CameraUpdate.newLatLngZoom(results.first.latLng, 15));
-        setState(() {
-          _selectedPosition = results.first.latLng;
-          _currentAddress = results.first.address;
-          _addressController.text = results.first.address;
-          _isSearching = false;
-          _suggestions = [];
-        });
-      } else {
-        setState(() {
-          _suggestions = results;
-          _isSearching = false;
-        });
-      }
-    } catch (e) {
+      setState(() {
+        _geocodeSuggestions = results;
+        _placeSuggestions = [];
+        _isSearching = false;
+      });
+    } catch (_) {
       if (mounted) {
         setState(() {
           _isSearching = false;
-          _suggestions = [];
-          _searchError = 'Search failed. Check internet or try another address.';
+          _placeSuggestions = [];
+          _geocodeSuggestions = [];
+          _searchError = 'Suggestions load nahi ho paye. Internet check karein.';
         });
       }
     }
   }
 
-  void _pickSuggestion(_SearchResult result) async {
+  void _pickGeocodeSuggestion(_GeocodeSuggestion g) {
+    _isProgrammaticUpdate = true;
     setState(() {
-      _selectedPosition = result.latLng;
-      _currentAddress = result.address;
-      _addressController.text = result.address;
-      _suggestions = [];
+      _selectedPosition = g.latLng;
+      _currentAddress = g.address;
+      _addressController.text = g.address;
+      _placeSuggestions = [];
+      _geocodeSuggestions = [];
+      _searchError = null;
+    });
+    _isProgrammaticUpdate = false;
+    _mapController.future.then((controller) async {
+      await controller.animateCamera(CameraUpdate.newLatLngZoom(g.latLng, 15));
+    });
+  }
+
+  Future<void> _pickPlaceSuggestion(PlacePrediction prediction) async {
+    setState(() => _isLoadingAddress = true);
+    try {
+      final details = await PlaceAutocompleteApi.getPlaceDetails(prediction.placeId);
+      if (!mounted) return;
+      if (details == null) {
+        setState(() {
+          _isLoadingAddress = false;
+          _searchError = 'Location load nahi hua.';
+        });
+        return;
+      }
+      final latLng = LatLng(details.lat, details.lng);
+      _isProgrammaticUpdate = true;
+      setState(() {
+        _selectedPosition = latLng;
+        _currentAddress = details.formattedAddress;
+        _addressController.text = details.formattedAddress;
+        _placeSuggestions = [];
+        _isLoadingAddress = false;
+        _searchError = null;
+      });
+      _isProgrammaticUpdate = false;
+      final controller = await _mapController.future;
+      await controller.animateCamera(CameraUpdate.newLatLngZoom(latLng, 15));
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _isLoadingAddress = false;
+          _searchError = 'Location load nahi hua.';
+        });
+      }
+    }
+  }
+
+  Future<void> _getCurrentLocationAndCenter() async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      if (mounted) _moveToDefaultAndReverseGeocode();
+      return;
+    }
+    var permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+    if (permission == LocationPermission.deniedForever || permission == LocationPermission.denied) {
+      if (mounted) _moveToDefaultAndReverseGeocode();
+      return;
+    }
+    try {
+      final pos = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.medium,
+        timeLimit: const Duration(seconds: 10),
+      );
+      if (!mounted) return;
+      final latLng = LatLng(pos.latitude, pos.longitude);
+      setState(() => _selectedPosition = latLng);
+      _reverseGeocodeForCurrentOnly(latLng);
+      final controller = await _mapController.future;
+      await controller.animateCamera(CameraUpdate.newLatLngZoom(latLng, 15));
+    } catch (_) {
+      if (mounted) _moveToDefaultAndReverseGeocode();
+    }
+  }
+
+  void _moveToDefaultAndReverseGeocode() {
+    setState(() => _selectedPosition = _defaultCenter);
+    _reverseGeocodeForCurrentOnly(_defaultCenter);
+    _mapController.future.then((c) async {
+      await c.animateCamera(CameraUpdate.newLatLngZoom(_defaultCenter, 12));
+    });
+  }
+
+  Future<void> _reverseGeocodeForCurrentOnly(LatLng position) async {
+    setState(() => _isLoadingAddress = true);
+    try {
+      final placemarks = await placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+      if (!mounted) return;
+      final p = placemarks.isNotEmpty ? placemarks.first : null;
+      final parts = [
+        p?.street,
+        p?.subLocality,
+        p?.locality,
+        p?.administrativeArea,
+        p?.country,
+      ].whereType<String>().where((s) => s.isNotEmpty).toList();
+      _currentAddress = parts.isEmpty ? '${position.latitude}, ${position.longitude}' : parts.join(', ');
+    } catch (_) {
+      _currentAddress = '${position.latitude}, ${position.longitude}';
+    }
+    if (mounted) setState(() => _isLoadingAddress = false);
+  }
+
+  @override
+  void dispose() {
+    _debounceTimer?.cancel();
+    _addressController.removeListener(_onAddressTextChanged);
+    _addressController.dispose();
+    super.dispose();
+  }
+
+  /// Used only when opening with initialAddress (geocoding to get lat/lng).
+  Future<void> _searchByAddress(String query) async {
+    if (query.trim().isEmpty) return;
+    setState(() {
+      _isSearching = true;
+      _searchError = null;
     });
     try {
+      final locations = await locationFromAddress(query.trim());
+      if (!mounted) return;
+      if (locations.isEmpty) {
+        setState(() {
+          _isSearching = false;
+          _searchError = 'Address not found. Try different words.';
+        });
+        return;
+      }
+      final loc = locations.first;
+      final latLng = LatLng(loc.latitude, loc.longitude);
+      String address = query.trim();
+      try {
+        final placemarks = await placemarkFromCoordinates(loc.latitude, loc.longitude);
+        if (placemarks.isNotEmpty) {
+          final p = placemarks.first;
+          address = [p.street, p.subLocality, p.locality, p.administrativeArea, p.country]
+              .whereType<String>()
+              .where((s) => s.isNotEmpty)
+              .join(', ');
+        }
+      } catch (_) {}
+      if (!mounted) return;
       final controller = await _mapController.future;
-      await controller.animateCamera(CameraUpdate.newLatLngZoom(result.latLng, 15));
-    } catch (_) {}
+      await controller.animateCamera(CameraUpdate.newLatLngZoom(latLng, 15));
+      _isProgrammaticUpdate = true;
+      setState(() {
+        _selectedPosition = latLng;
+        _currentAddress = address;
+        _addressController.text = address;
+        _isSearching = false;
+      });
+      _isProgrammaticUpdate = false;
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _isSearching = false;
+          _searchError = 'Search failed. Check internet.';
+        });
+      }
+    }
   }
 
   Future<void> _reverseGeocode(LatLng position) async {
@@ -162,18 +339,22 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
         p?.country,
       ].whereType<String>().where((s) => s.isNotEmpty).toList();
       final address = parts.isEmpty ? '${position.latitude}, ${position.longitude}' : parts.join(', ');
+      _isProgrammaticUpdate = true;
       setState(() {
         _currentAddress = address;
         _addressController.text = address;
         _isLoadingAddress = false;
       });
+      _isProgrammaticUpdate = false;
     } catch (_) {
       if (mounted) {
+        _isProgrammaticUpdate = true;
         setState(() {
           _currentAddress = '${position.latitude}, ${position.longitude}';
           _addressController.text = _currentAddress;
           _isLoadingAddress = false;
         });
+        _isProgrammaticUpdate = false;
       }
     }
   }
@@ -196,7 +377,15 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
     final address = _addressController.text.trim().isNotEmpty
         ? _addressController.text.trim()
         : _currentAddress;
-    Navigator.of(context).pop(address.isNotEmpty ? address : null);
+    if (address.isEmpty) {
+      Navigator.of(context).pop(null);
+      return;
+    }
+    Navigator.of(context).pop({
+      'address': address,
+      'latitude': _selectedPosition.latitude,
+      'longitude': _selectedPosition.longitude,
+    });
   }
 
   @override
@@ -224,7 +413,7 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
                 TextField(
                   controller: _addressController,
                   decoration: InputDecoration(
-                    hintText: 'Address type karein, phir Search ya Enter dabayein',
+                    hintText: 'Type place',
                     prefixIcon: const Icon(Icons.location_on_outlined),
                     suffixIcon: _isSearching
                         ? const Padding(
@@ -237,12 +426,12 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
                           )
                         : IconButton(
                             icon: const Icon(Icons.search),
-                            onPressed: () => _searchByAddress(_addressController.text.trim()),
+                            onPressed: () => _fetchPlaceSuggestions(_addressController.text.trim()),
                           ),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                     filled: true,
                   ),
-                  onSubmitted: _searchByAddress,
+                  onSubmitted: (_) => _fetchPlaceSuggestions(_addressController.text.trim()),
                   textInputAction: TextInputAction.search,
                 ),
                 if (_searchError != null) ...[
@@ -252,26 +441,37 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
                     style: TextStyle(color: colorScheme.error, fontSize: 13),
                   ),
                 ],
-                if (_suggestions.isNotEmpty) ...[
+                if (_placeSuggestions.isNotEmpty || _geocodeSuggestions.isNotEmpty) ...[
                   const SizedBox(height: 8),
                   Text(
-                    'Tap a suggestion:',
+                    'Suggestion se select karein:',
                     style: TextStyle(
                       fontSize: 12,
                       color: colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
                   ),
                   const SizedBox(height: 4),
-                  ..._suggestions.map((r) => ListTile(
+                  ..._placeSuggestions.map((p) => ListTile(
                     dense: true,
                     leading: const Icon(Icons.place, color: AppColors.primary, size: 22),
                     title: Text(
-                      r.address,
+                      p.description,
                       style: const TextStyle(fontSize: 14),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    onTap: () => _pickSuggestion(r),
+                    onTap: () => _pickPlaceSuggestion(p),
+                  )),
+                  ..._geocodeSuggestions.map((g) => ListTile(
+                    dense: true,
+                    leading: const Icon(Icons.location_on, color: AppColors.primary, size: 22),
+                    title: Text(
+                      g.address,
+                      style: const TextStyle(fontSize: 14),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    onTap: () => _pickGeocodeSuggestion(g),
                   )),
                 ],
               ],
