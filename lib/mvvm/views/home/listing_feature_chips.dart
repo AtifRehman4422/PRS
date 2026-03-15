@@ -105,7 +105,8 @@ List<Widget> buildThreeFeatureChips(BuildContext context, ListingModel listing) 
         '${td['bhk']} BHK',
         iconColor: AppColors.primary,
       ));
-    } else if (listing.propertyType == 'Guest House' &&
+    } else if ((listing.propertyType == 'Guest House' ||
+            listing.propertyType == 'Hotel') &&
         td['rooms'] != null &&
         chips.length < 3) {
       chips.add(buildImportantFeatureChip(

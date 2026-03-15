@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:propertyrent/core/app_color/app_colors.dart';
 import 'package:propertyrent/core/widgets/logo_loader.dart';
+import 'package:propertyrent/core/widgets/app_primary_button.dart';
 import 'package:propertyrent/data/datasource/auth_api.dart';
 import 'package:propertyrent/mvvm/viewmodels/auth_viewmodel.dart';
 
@@ -184,25 +185,13 @@ class _EmailVerificationCodeScreenState
                   children: List.generate(6, (i) => _buildDigitField(i, colorScheme)),
                 ),
                 const SizedBox(height: 32),
-                SizedBox(
-                  width: double.infinity,
+                AppPrimaryButton(
+                  label: 'Verify & Create account',
+                  onPressed: _isVerifying || _enteredCode.length != 6 ? null : _verify,
+                  isLoading: _isVerifying,
+                  loader: const LogoLoader(size: 22),
                   height: 56,
-                  child: ElevatedButton(
-                    onPressed: _isVerifying || _enteredCode.length != 6
-                        ? null
-                        : _verify,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: AppColors.primary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(28),
-                      ),
-                      elevation: 4,
-                    ),
-                    child: _isVerifying
-                        ? const LogoLoader(size: 28)
-                        : const Text('Verify & Create account', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  ),
+                  borderRadius: 28,
                 ),
                 const SizedBox(height: 20),
                 TextButton.icon(

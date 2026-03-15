@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:propertyrent/core/app_color/app_colors.dart';
+import 'package:propertyrent/core/widgets/app_primary_button.dart';
 import 'package:propertyrent/core/widgets/logo_loader.dart';
 import 'package:propertyrent/mvvm/viewmodels/auth_viewmodel.dart';
 import 'package:propertyrent/mvvm/views/auth/login_view.dart';
@@ -147,17 +148,13 @@ class _ResetPasswordViewState extends ConsumerState<ResetPasswordView> {
                   },
                 ),
                 const SizedBox(height: 32),
-                SizedBox(
+                AppPrimaryButton(
+                  label: 'Reset password',
+                  onPressed: _isResetting ? null : _submit,
+                  isLoading: _isResetting,
+                  loader: const LogoLoader(size: 22),
                   height: 52,
-                  child: ElevatedButton(
-                    onPressed: _isResetting ? null : _submit,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
-                    ),
-                    child: _isResetting ? const LogoLoader(size: 28) : const Text('Reset password', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  ),
+                  borderRadius: 26,
                 ),
               ],
             ),

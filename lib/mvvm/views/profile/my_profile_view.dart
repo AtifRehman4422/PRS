@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:propertyrent/core/app_color/app_colors.dart';
 import 'package:propertyrent/core/constants/app_images.dart';
 import 'package:propertyrent/core/animations/fade_in_slide.dart';
+import 'package:propertyrent/core/widgets/app_primary_button.dart';
 import 'package:propertyrent/data/datasource/auth_api.dart';
 import 'package:propertyrent/mvvm/viewmodels/auth_viewmodel.dart';
 
@@ -83,7 +84,7 @@ class _MyProfileViewState extends ConsumerState<MyProfileView> {
         const SnackBar(
           content: Text('Please login again to update profile.'),
           behavior: SnackBarBehavior.floating,
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.primary,
         ),
       );
       return;
@@ -99,7 +100,7 @@ class _MyProfileViewState extends ConsumerState<MyProfileView> {
           const SnackBar(
             content: Text('Enter current password to change password.'),
             behavior: SnackBarBehavior.floating,
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.primary,
           ),
         );
         return;
@@ -109,7 +110,7 @@ class _MyProfileViewState extends ConsumerState<MyProfileView> {
           const SnackBar(
             content: Text('Enter new password and confirm password.'),
             behavior: SnackBarBehavior.floating,
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.primary,
           ),
         );
         return;
@@ -119,7 +120,7 @@ class _MyProfileViewState extends ConsumerState<MyProfileView> {
           const SnackBar(
             content: Text('New password and confirm password do not match.'),
             behavior: SnackBarBehavior.floating,
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.primary,
           ),
         );
         return;
@@ -129,7 +130,7 @@ class _MyProfileViewState extends ConsumerState<MyProfileView> {
           const SnackBar(
             content: Text('New password must be at least 6 characters.'),
             behavior: SnackBarBehavior.floating,
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.primary,
           ),
         );
         return;
@@ -146,7 +147,7 @@ class _MyProfileViewState extends ConsumerState<MyProfileView> {
           SnackBar(
             content: Text(pwResult.message ?? 'Failed to change password'),
             behavior: SnackBarBehavior.floating,
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.primary,
           ),
         );
         return;
@@ -188,7 +189,7 @@ class _MyProfileViewState extends ConsumerState<MyProfileView> {
         SnackBar(
           content: Text(result.message ?? 'Failed to update profile'),
           behavior: SnackBarBehavior.floating,
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.primary,
         ),
       );
     }
@@ -363,29 +364,11 @@ class _MyProfileViewState extends ConsumerState<MyProfileView> {
                             ),
                           ],
                           const SizedBox(height: 32),
-                          SizedBox(
-                            width: double.infinity,
+                          AppPrimaryButton(
+                            label: 'Save Changes',
+                            onPressed: _saveProfile,
                             height: 56,
-                            child: ElevatedButton(
-                              onPressed: _saveProfile,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primary,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                elevation: 4,
-                                shadowColor:
-                                    AppColors.primary.withValues(alpha: 0.4),
-                              ),
-                              child: const Text(
-                                'Save Changes',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
+                            borderRadius: 16,
                           ),
                         ],
                       ),

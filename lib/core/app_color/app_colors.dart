@@ -5,14 +5,14 @@ class AppColors {
   AppColors._();
 
   // ============== Primary Colors ==============
-  /// Main brand color (used in header and bottom navigation).
+  /// Main brand color (used in header and buttons).
   static const Color primary = Color(0xFFE30707);
 
-  /// Slightly darker shade of the primary color for gradients.
-  static const Color primaryDark = Color(0xFFD20000);
+  /// Slightly darker shade of the primary color for gradients/shadows.
+  static const Color primaryDark = Color(0xFFB71C1C);
 
-  /// Light shade of primary for backgrounds.
-  static const Color primaryLight = Color(0xFFFFEBEE);
+  /// Light shade of primary for subtle backgrounds.
+  static const Color primaryLight = Color(0xFFFFCDD2);
 
   // ============== Background & Surface ==============
   /// Page background behind cards and content.
@@ -29,8 +29,11 @@ class AppColors {
   static const Color textSecondary = Colors.black54;
 
   // ============== Gradient Colors ==============
-  /// Red color for gradients.
-  static const Color gradientRed = Colors.red;
+  /// Primary gradient start (red).
+  static const Color gradientPrimaryStart = Color(0xFFE53935);
+
+  /// Primary gradient end (orange-red).
+  static const Color gradientPrimaryEnd = Color(0xFFFF7043);
 
   /// Black color for gradients.
   static const Color gradientBlack = Colors.black;

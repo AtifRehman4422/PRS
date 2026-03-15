@@ -261,7 +261,7 @@ class _HomeViewState extends ConsumerState<HomeView> {
                                 ),
                               ),
                               TyperAnimatedText(
-                                'Marquee & More...',
+                                'Find your space...',
                                 textStyle: TextStyle(
                                   color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
                                   fontSize: 14,
@@ -295,8 +295,13 @@ class _HomeViewState extends ConsumerState<HomeView> {
                             margin: const EdgeInsets.all(6),
                             padding: const EdgeInsets.all(10),
                             decoration: const BoxDecoration(
-                              color: AppColors.primary,
                               shape: BoxShape.circle,
+                              gradient: LinearGradient(
+                                colors: [
+                                  AppColors.primary,
+                                  AppColors.primary,
+                                ],
+                              ),
                             ),
                             child: const Icon(
                               Icons.search,
@@ -324,13 +329,11 @@ class _HomeViewState extends ConsumerState<HomeView> {
   Widget _buildCategoryGrid(Size size) {
     final items = [
       _CategoryItem(title: 'Hostel', imagePath: AppImages.hostel),
+      _CategoryItem(title: 'Hotel', imagePath: AppImages.house),
       _CategoryItem(title: 'Flat', imagePath: AppImages.flat),
       _CategoryItem(title: 'Office', imagePath: AppImages.office),
       _CategoryItem(title: 'Shop', imagePath: AppImages.shop),
-      _CategoryItem(title: 'Marquee', imagePath: AppImages.img1),
-      _CategoryItem(title: 'Farmhouse', imagePath: AppImages.img2),
       _CategoryItem(title: 'House', imagePath: AppImages.house),
-      _CategoryItem(title: 'Guest House', imagePath: AppImages.house),
     ];
 
     final crossAxisCount = size.width < 360 ? 1 : 2;
@@ -470,13 +473,18 @@ class _CategoryCard extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 14),
-        // The Red Button below the card
+        // The Gradient Button below the card
         Container(
           height: 48,
           width: double.infinity,
           decoration: BoxDecoration(
-            color: AppColors.primary,
             borderRadius: BorderRadius.circular(24),
+            gradient: const LinearGradient(
+              colors: [
+                AppColors.primary,
+                AppColors.primary,
+              ],
+            ),
             boxShadow: [
               BoxShadow(
                 color: AppColors.primary.withValues(alpha: 0.3),

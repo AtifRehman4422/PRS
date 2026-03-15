@@ -38,13 +38,11 @@ class _AdvertiserAdsViewState extends ConsumerState<AdvertiserAdsView> {
   String? _selectedType;
   final List<String> _types = const [
     'Hostel',
+    'Hotel',
     'House',
     'Flat',
     'Shop',
-    'Marquee',
-    'Farm House',
     'Office',
-    'Guest House',
   ];
 
   @override
@@ -108,7 +106,7 @@ class _AdvertiserAdsViewState extends ConsumerState<AdvertiserAdsView> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(isFav ? 'Removed from favorites' : 'Added to favorites'),
-        backgroundColor: isFav ? Colors.red : Colors.green,
+        backgroundColor: isFav ? AppColors.primary : Colors.green,
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 2),
       ),
@@ -211,7 +209,7 @@ class _AdvertiserAdsViewState extends ConsumerState<AdvertiserAdsView> {
                                       child: ChoiceChip(
                                         label: Text(t),
                                         selected: _selectedType == t,
-                                        selectedColor: Colors.red,
+                                        selectedColor: AppColors.primary,
                                         labelStyle: TextStyle(
                                           color: _selectedType == t
                                               ? Colors.white

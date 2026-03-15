@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:propertyrent/core/app_color/app_colors.dart';
 import 'package:propertyrent/core/animations/fade_in_slide.dart';
+import 'package:propertyrent/core/widgets/app_primary_button.dart';
 import 'package:propertyrent/core/widgets/logo_loader.dart';
 import 'package:propertyrent/data/datasource/auth_api.dart';
 import 'package:propertyrent/mvvm/views/auth/email_verification_code_screen.dart';
@@ -528,30 +529,11 @@ class _SignupViewState extends ConsumerState<SignupView> {
                     // Sign Up (email + password)
                     FadeInSlide(
                       delay: 0.6,
-                      child: SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: ElevatedButton(
-                          onPressed: _isSigningUp ? null : _signUpWithEmail,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(32),
-                            ),
-                            elevation: 4,
-                            shadowColor: AppColors.primary.withValues(alpha: 0.4),
-                          ),
-                          child: _isSigningUp
-                              ? const LogoLoader(size: 28)
-                              : const Text(
-                                  'Sign Up',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                        ),
+                      child: AppPrimaryButton(
+                        label: 'Sign Up',
+                        onPressed: _isSigningUp ? null : _signUpWithEmail,
+                        isLoading: _isSigningUp,
+                        loader: const LogoLoader(size: 22),
                       ),
                     ),
                     const SizedBox(height: 24),

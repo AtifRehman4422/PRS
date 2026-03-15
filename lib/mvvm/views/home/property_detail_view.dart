@@ -12,6 +12,7 @@ import 'package:propertyrent/mvvm/viewmodels/auth_viewmodel.dart';
 import 'package:propertyrent/mvvm/views/auth/login_view.dart';
 import 'package:propertyrent/mvvm/views/home/widgets/property_card.dart';
 import 'package:propertyrent/mvvm/views/home/advertiser_ads_view.dart';
+import 'package:propertyrent/core/widgets/app_primary_button.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
 class PropertyDetailView extends ConsumerStatefulWidget {
@@ -142,7 +143,7 @@ class _PropertyDetailViewState extends ConsumerState<PropertyDetailView> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(added ? 'Added to favorites' : 'Removed from favorites'),
-        backgroundColor: added ? Colors.green : Colors.red,
+        backgroundColor: added ? Colors.green : AppColors.primary,
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 2),
       ),
@@ -430,7 +431,7 @@ class _PropertyDetailViewState extends ConsumerState<PropertyDetailView> {
                                   child: Icon(
                                     _isFavorite ? Icons.favorite : Icons.favorite_border,
                                     size: 22,
-                                    color: _isFavorite ? AppColors.primary : Colors.black,
+                                  color: _isFavorite ? AppColors.primary : Colors.black,
                                   ),
                                 ),
                               ),
@@ -697,13 +698,13 @@ class _PropertyDetailViewState extends ConsumerState<PropertyDetailView> {
                               onPressed: _showReportDialog,
                               icon: const Icon(
                                 Icons.flag_outlined,
-                                color: Colors.red,
+                                color: AppColors.primary,
                                 size: 20,
                               ),
                               label: const Text(
                                 'Report This Ad',
                                 style: TextStyle(
-                                  color: Colors.red,
+                                  color: AppColors.primary,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -800,23 +801,18 @@ class _PropertyDetailViewState extends ConsumerState<PropertyDetailView> {
                                               onTap: (_) => _openInGoogleMaps(),
                                             ),
                                             Positioned(
-                                              bottom: 12,
+                                              left: 12,
                                               right: 12,
-                                              child: ElevatedButton.icon(
-                                                onPressed: _openInGoogleMaps,
-                                                icon: const Icon(
-                                                  Icons.map,
-                                                  color: Colors.white,
-                                                ),
-                                                label: const Text(
-                                                  'Open in Google Maps',
-                                                  style: TextStyle(color: Colors.white),
-                                                ),
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor: AppColors.primary,
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius: BorderRadius.circular(12),
-                                                  ),
+                                              bottom: 12,
+                                              child: SizedBox(
+                                                height: 40,
+                                                width: double.infinity,
+                                                child: AppPrimaryButton(
+                                                  label: 'Open in Google Maps',
+                                                  icon: Icons.map,
+                                                  onPressed: _openInGoogleMaps,
+                                                  height: 40,
+                                                  borderRadius: 20,
                                                 ),
                                               ),
                                             ),
@@ -1199,7 +1195,7 @@ class _ReportAdSheetState extends ConsumerState<ReportAdSheet> {
                                   ),
                                   behavior: SnackBarBehavior.floating,
                                   backgroundColor:
-                                      result.success ? Colors.green : Colors.red,
+                                      result.success ? Colors.green : AppColors.primary,
                                   duration: const Duration(seconds: 3),
                                 ),
                               );
@@ -1293,6 +1289,14 @@ List<_DetailItem> _buildDetailItems(ListingModel? listing, int bedrooms, int bat
           if (td['cabins'] != null) list.add(_DetailItem(Icons.meeting_room, 'Cabins', '${td['cabins']}'));
           if (td['workstations'] != null) list.add(_DetailItem(Icons.computer, 'Workstations', '${td['workstations']}'));
           if (td['suitable_for'] != null) list.add(_DetailItem(Icons.business, 'Suitable For', '${td['suitable_for']}'));
+          break;
+        case 'Hotel':
+          if (td['rooms'] != null) list.add(_DetailItem(Icons.hotel, 'Rooms', '${td['rooms']}'));
+          if (td['ac_type'] != null) list.add(_DetailItem(Icons.ac_unit, 'AC Type', '${td['ac_type']}'));
+          if (td['wifi'] == true) list.add(_DetailItem(Icons.wifi, 'Free Wi-Fi', 'Yes'));
+          if (td['parking'] == true) list.add(_DetailItem(Icons.local_parking, 'Parking', 'Yes'));
+          if (td['room_service'] == true) list.add(_DetailItem(Icons.room_service, 'Room Service', 'Yes'));
+          if (td['cctv'] == true) list.add(_DetailItem(Icons.security, 'CCTV', 'Yes'));
           break;
         case 'Marquee':
           if (td['max_guests'] != null) list.add(_DetailItem(Icons.groups, 'Max Guests', '${td['max_guests']}'));

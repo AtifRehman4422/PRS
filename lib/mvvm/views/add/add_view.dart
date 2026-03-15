@@ -8,6 +8,7 @@ import 'package:propertyrent/core/app_color/app_colors.dart';
 import 'package:propertyrent/core/constants/api_config.dart';
 import 'package:propertyrent/core/constants/app_images.dart';
 import 'package:propertyrent/core/animations/fade_in_slide.dart';
+import 'package:propertyrent/core/widgets/app_primary_button.dart';
 import 'package:propertyrent/core/widgets/logo_loader.dart';
 import 'package:propertyrent/data/datasource/listing_api.dart';
 import 'package:propertyrent/data/models/listing_model.dart';
@@ -33,13 +34,11 @@ class _AddViewState extends ConsumerState<AddView> {
   String _selectedPropertyType = 'Hostel';
   final List<String> _propertyTypes = [
     'Hostel',
+    'Hotel',
     'House',
     'Flat',
     'Office',
     'Shop',
-    'Marquee',
-    'Guest House',
-    'Farm House',
   ];
 
   // Hostel specific
@@ -152,6 +151,30 @@ class _AddViewState extends ConsumerState<AddView> {
     'General',
   ];
   final _officeAvailableFromController = TextEditingController();
+
+  // Hotel specific
+  int _hotelRooms = 1;
+  String _hotelAcType = 'AC';
+  final List<String> _hotelAcOptions = ['AC', 'Non-AC', 'Both'];
+  bool _hotelCleanBeds = false;
+  bool _hotelAttachedBathroom = false;
+  bool _hotelFamilyRooms = false;
+  bool _hotelWifi = false;
+  bool _hotelParking = false;
+  bool _hotelBreakfast = false;
+  bool _hotelLunchDinner = false;
+  bool _hotelRoomService = false;
+  bool _hotelCctv = false;
+  bool _hotelSecurity24 = false;
+  bool _hotelSafeEnv = false;
+  bool _hotelNearMarket = false;
+  bool _hotelNearBusStand = false;
+  bool _hotelNearTourist = false;
+  bool _hotelLaundry = false;
+  bool _hotelSwimmingPool = false;
+  bool _hotelGym = false;
+  bool _hotelConferenceHall = false;
+  final _hotelAvailableFromController = TextEditingController();
 
   // Marquee/Banquet specific
   int _maxGuests = 100;
@@ -541,6 +564,28 @@ class _AddViewState extends ConsumerState<AddView> {
         _officeSecurity = _toBool(td['security']);
         _officeSuitableFor = td['suitable_for']?.toString() ?? 'IT Company';
         _officeAvailableFromController.text = td['available_from_date']?.toString() ?? '';
+      } else if (listing.propertyType == 'Hotel') {
+        _hotelRooms = int.tryParse(td['rooms']?.toString() ?? '') ?? 1;
+        _hotelAcType = td['ac_type']?.toString() ?? 'AC';
+        _hotelCleanBeds = _toBool(td['clean_beds']);
+        _hotelAttachedBathroom = _toBool(td['attached_bathroom']);
+        _hotelFamilyRooms = _toBool(td['family_rooms']);
+        _hotelWifi = _toBool(td['wifi']);
+        _hotelParking = _toBool(td['parking']);
+        _hotelBreakfast = _toBool(td['breakfast']);
+        _hotelLunchDinner = _toBool(td['lunch_dinner']);
+        _hotelRoomService = _toBool(td['room_service']);
+        _hotelCctv = _toBool(td['cctv']);
+        _hotelSecurity24 = _toBool(td['security_24']);
+        _hotelSafeEnv = _toBool(td['safe_env']);
+        _hotelNearMarket = _toBool(td['near_market']);
+        _hotelNearBusStand = _toBool(td['near_bus_stand']);
+        _hotelNearTourist = _toBool(td['near_tourist']);
+        _hotelLaundry = _toBool(td['laundry']);
+        _hotelSwimmingPool = _toBool(td['swimming_pool']);
+        _hotelGym = _toBool(td['gym']);
+        _hotelConferenceHall = _toBool(td['conference_hall']);
+        _hotelAvailableFromController.text = td['available_from_date']?.toString() ?? '';
       } else if (listing.propertyType == 'Marquee') {
         _maxGuests = int.tryParse(td['max_guests']?.toString() ?? '') ?? 100;
         _marqueeAc = _toBool(td['ac']);
@@ -607,6 +652,7 @@ class _AddViewState extends ConsumerState<AddView> {
   }
 
   Future<void> _handleSave() async {
+    if (_isSaving) return;
     if (!_formKey.currentState!.validate()) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -647,7 +693,9 @@ class _AddViewState extends ConsumerState<AddView> {
 
     setState(() => _isSaving = true);
     await Future.delayed(const Duration(milliseconds: 80));
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
     try {
       final authRepo = ref.read(authRepositoryProvider);
       final token = await authRepo.getAuthToken();
@@ -680,6 +728,9 @@ class _AddViewState extends ConsumerState<AddView> {
           break;
         case 'Office':
           typeAvailableDate = _officeAvailableFromController.text.trim();
+          break;
+        case 'Hotel':
+          typeAvailableDate = _hotelAvailableFromController.text.trim();
           break;
         case 'Guest House':
           typeAvailableDate = _guestHouseAvailableFromController.text.trim();
@@ -779,6 +830,30 @@ class _AddViewState extends ConsumerState<AddView> {
           'internet_ready': _officeInternetReady,
           'security': _officeSecurity,
           'suitable_for': _officeSuitableFor,
+          'available_from_date': typeAvailableDate,
+        });
+      } else if (propertyType == 'Hotel') {
+        typeDetails.addAll({
+          'rooms': _hotelRooms,
+          'ac_type': _hotelAcType,
+          'clean_beds': _hotelCleanBeds,
+          'attached_bathroom': _hotelAttachedBathroom,
+          'family_rooms': _hotelFamilyRooms,
+          'wifi': _hotelWifi,
+          'parking': _hotelParking,
+          'breakfast': _hotelBreakfast,
+          'lunch_dinner': _hotelLunchDinner,
+          'room_service': _hotelRoomService,
+          'cctv': _hotelCctv,
+          'security_24': _hotelSecurity24,
+          'safe_env': _hotelSafeEnv,
+          'near_market': _hotelNearMarket,
+          'near_bus_stand': _hotelNearBusStand,
+          'near_tourist': _hotelNearTourist,
+          'laundry': _hotelLaundry,
+          'swimming_pool': _hotelSwimmingPool,
+          'gym': _hotelGym,
+          'conference_hall': _hotelConferenceHall,
           'available_from_date': typeAvailableDate,
         });
       } else if (propertyType == 'Marquee') {
@@ -914,7 +989,7 @@ class _AddViewState extends ConsumerState<AddView> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(result.message ?? 'Failed to save. Please try again.'),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.primary,
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 3),
           margin: const EdgeInsets.all(16),
@@ -927,7 +1002,7 @@ class _AddViewState extends ConsumerState<AddView> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: ${e.toString().replaceFirst('Exception: ', '')}'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.primary,
             behavior: SnackBarBehavior.floating,
             duration: const Duration(seconds: 4),
           ),
@@ -962,6 +1037,7 @@ class _AddViewState extends ConsumerState<AddView> {
     _houseAvailableFromController.dispose();
     _shopAvailableFromController.dispose();
     _officeAvailableFromController.dispose();
+    _hotelAvailableFromController.dispose();
     _guestHouseAvailableFromController.dispose();
     _farmAvailableFromController.dispose();
     _hostelInTimeRulesController.dispose();
@@ -974,7 +1050,7 @@ class _AddViewState extends ConsumerState<AddView> {
 
   Widget _gradientIcon(
     IconData icon, {
-    Color color1 = Colors.red,
+    Color color1 = AppColors.primary,
     Color color2 = Colors.black,
     double size = 24,
   }) {
@@ -996,7 +1072,7 @@ class _AddViewState extends ConsumerState<AddView> {
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: SafeArea(
         child: _isEditMode && !_editLoadComplete
-            ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
             : Form(
           key: _formKey,
           child: Column(
@@ -1133,7 +1209,10 @@ class _AddViewState extends ConsumerState<AddView> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               if (_selectedPropertyType != 'House' &&
-                                  _selectedPropertyType != 'Flat') ...[
+                                  _selectedPropertyType != 'Flat' &&
+                                  _selectedPropertyType != 'Office' &&
+                                  _selectedPropertyType != 'Shop' &&
+                                  _selectedPropertyType != 'Hotel') ...[
                                 _buildSectionTitle(
                                   Icons.local_laundry_service,
                                   'Select Laundry',
@@ -1592,33 +1671,13 @@ class _AddViewState extends ConsumerState<AddView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildSectionTitle(
-                  isHouse ? Icons.home : Icons.apartment,
-                  isHouse ? 'House Details' : 'Flat Details',
-                ),
-                const SizedBox(height: 8),
-
                 if (isHouse) ...[
+                  _buildSectionTitle(Icons.home, 'House Details'),
+                  const SizedBox(height: 8),
                   _buildDropdown('House Type', _selectedPortion, _portions, (
                     val,
                   ) {
                     setState(() => _selectedPortion = val!);
-                  }),
-                  _buildDivider(),
-                ],
-
-                if (!isHouse) ...[
-                  _buildDropdown('BHK Type', _selectedBHK, _bhkTypes, (val) {
-                    setState(() => _selectedBHK = val!);
-                  }),
-                  _buildDivider(),
-                ],
-
-                if (!isHouse) ...[
-                  _buildSectionTitle(Icons.layers, 'Floor Number'),
-                  const SizedBox(height: 8),
-                  _buildSlider('Floor', _selectedFloor, 1, 30, (val) {
-                    setState(() => _selectedFloor = val);
                   }),
                   _buildDivider(),
                 ],
@@ -1641,42 +1700,28 @@ class _AddViewState extends ConsumerState<AddView> {
                 ),
                 _buildDivider(),
 
-                _buildSectionTitle(Icons.featured_play_list, 'Features'),
-                const SizedBox(height: 8),
-                _buildCheckboxes(
-                  isHouse
-                      ? {
-                          'Balcony': _houseBalcony,
-                          'Modular Kitchen': _houseModularKitchen,
-                          'Lift': _houseLift,
-                          'Parking': _houseParking,
-                        }
-                      : {
-                          'Lift': _flatLift,
-                          'Balcony': _flatBalcony,
-                          'Modular Kitchen': _flatModularKitchen,
-                          'Parking': _flatParking,
-                          'Backup Generator': _flatGenerator,
-                        },
-                  (key, val) {
-                    setState(() {
-                      if (isHouse) {
+                if (isHouse) ...[
+                  _buildSectionTitle(Icons.featured_play_list, 'Features'),
+                  const SizedBox(height: 8),
+                  _buildCheckboxes(
+                    {
+                      'Balcony': _houseBalcony,
+                      'Modular Kitchen': _houseModularKitchen,
+                      'Lift': _houseLift,
+                      'Parking': _houseParking,
+                    },
+                    (key, val) {
+                      setState(() {
                         if (key == 'Balcony') _houseBalcony = val;
                         if (key == 'Modular Kitchen')
                           _houseModularKitchen = val;
                         if (key == 'Lift') _houseLift = val;
                         if (key == 'Parking') _houseParking = val;
-                      } else {
-                        if (key == 'Lift') _flatLift = val;
-                        if (key == 'Balcony') _flatBalcony = val;
-                        if (key == 'Modular Kitchen') _flatModularKitchen = val;
-                        if (key == 'Parking') _flatParking = val;
-                        if (key == 'Backup Generator') _flatGenerator = val;
-                      }
-                    });
-                  },
-                ),
-                _buildDivider(),
+                      });
+                    },
+                  ),
+                  _buildDivider(),
+                ],
 
                 _buildSectionTitle(Icons.apartment_outlined, 'Facilities'),
                 const SizedBox(height: 8),
@@ -1875,9 +1920,6 @@ class _AddViewState extends ConsumerState<AddView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildSectionTitle(Icons.business_center, 'Office Details'),
-                const SizedBox(height: 8),
-
                 _buildSectionTitle(Icons.chair, 'Furnished Status'),
                 const SizedBox(height: 8),
                 _buildDropdown('Status', _officeFurnished, _furnishedOptions, (
@@ -1961,6 +2003,146 @@ class _AddViewState extends ConsumerState<AddView> {
                 const SizedBox(height: 8),
                 _buildDatePickerField(
                   _officeAvailableFromController,
+                  'Select date',
+                ),
+                const SizedBox(height: 12),
+                _buildTimePickerField(
+                  _availableFromTimeController,
+                  'Select time (optional)',
+                ),
+                _buildDivider(),
+              ],
+            ),
+          ),
+        ];
+
+      case 'Hotel':
+        return [
+          FadeInSlide(
+            delay: 0.15,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildSectionTitle(Icons.hotel, 'Rooms (Kamray)'),
+                const SizedBox(height: 8),
+                _buildSlider('Number of Rooms', _hotelRooms, 1, 100, (val) {
+                  setState(() => _hotelRooms = val);
+                }),
+                _buildDivider(),
+                _buildDropdown('AC / Non-AC', _hotelAcType, _hotelAcOptions, (val) {
+                  setState(() => _hotelAcType = val!);
+                }),
+                _buildDivider(),
+                _buildCheckboxes(
+                  {
+                    'Clean Beds': _hotelCleanBeds,
+                    'Attached Bathroom': _hotelAttachedBathroom,
+                    'Family Rooms': _hotelFamilyRooms,
+                  },
+                  (key, val) {
+                    setState(() {
+                      if (key == 'Clean Beds') _hotelCleanBeds = val;
+                      if (key == 'Attached Bathroom') _hotelAttachedBathroom = val;
+                      if (key == 'Family Rooms') _hotelFamilyRooms = val;
+                    });
+                  },
+                ),
+                _buildDivider(),
+
+                _buildSectionTitle(Icons.wifi, 'Free Wi-Fi'),
+                const SizedBox(height: 8),
+                _buildCheckboxes(
+                  {'Free Wi-Fi': _hotelWifi},
+                  (key, val) => setState(() => _hotelWifi = val),
+                ),
+                _buildDivider(),
+
+                _buildSectionTitle(Icons.local_parking, 'Parking'),
+                const SizedBox(height: 8),
+                _buildCheckboxes(
+                  {'Free Parking': _hotelParking},
+                  (key, val) => setState(() => _hotelParking = val),
+                ),
+                _buildDivider(),
+
+                _buildSectionTitle(Icons.restaurant, 'Restaurant / Food'),
+                const SizedBox(height: 8),
+                _buildCheckboxes(
+                  {
+                    'Breakfast': _hotelBreakfast,
+                    'Lunch / Dinner': _hotelLunchDinner,
+                    'Room Service': _hotelRoomService,
+                  },
+                  (key, val) {
+                    setState(() {
+                      if (key == 'Breakfast') _hotelBreakfast = val;
+                      if (key == 'Lunch / Dinner') _hotelLunchDinner = val;
+                      if (key == 'Room Service') _hotelRoomService = val;
+                    });
+                  },
+                ),
+                _buildDivider(),
+
+                _buildSectionTitle(Icons.security, 'Security'),
+                const SizedBox(height: 8),
+                _buildCheckboxes(
+                  {
+                    'CCTV Cameras': _hotelCctv,
+                    '24-Hour Security': _hotelSecurity24,
+                    'Safe Environment': _hotelSafeEnv,
+                  },
+                  (key, val) {
+                    setState(() {
+                      if (key == 'CCTV Cameras') _hotelCctv = val;
+                      if (key == '24-Hour Security') _hotelSecurity24 = val;
+                      if (key == 'Safe Environment') _hotelSafeEnv = val;
+                    });
+                  },
+                ),
+                _buildDivider(),
+
+                _buildSectionTitle(Icons.place, 'Location'),
+                const SizedBox(height: 8),
+                _buildCheckboxes(
+                  {
+                    'Near Market': _hotelNearMarket,
+                    'Near Bus Stand / Station': _hotelNearBusStand,
+                    'Near Tourist Place': _hotelNearTourist,
+                  },
+                  (key, val) {
+                    setState(() {
+                      if (key == 'Near Market') _hotelNearMarket = val;
+                      if (key == 'Near Bus Stand / Station') _hotelNearBusStand = val;
+                      if (key == 'Near Tourist Place') _hotelNearTourist = val;
+                    });
+                  },
+                ),
+                _buildDivider(),
+
+                _buildSectionTitle(Icons.spa, 'Extra Facilities'),
+                const SizedBox(height: 8),
+                _buildCheckboxes(
+                  {
+                    'Laundry Service': _hotelLaundry,
+                    'Swimming Pool': _hotelSwimmingPool,
+                    'Gym': _hotelGym,
+                    'Conference Hall': _hotelConferenceHall,
+                  },
+                  (key, val) {
+                    setState(() {
+                      if (key == 'Laundry Service') _hotelLaundry = val;
+                      if (key == 'Swimming Pool') _hotelSwimmingPool = val;
+                      if (key == 'Gym') _hotelGym = val;
+                      if (key == 'Conference Hall') _hotelConferenceHall = val;
+                    });
+                  },
+                ),
+                _buildDivider(),
+
+                _buildSectionTitle(Icons.calendar_today, 'Available From'),
+                const SizedBox(height: 8),
+                _buildDatePickerField(
+                  _hotelAvailableFromController,
                   'Select date',
                 ),
                 const SizedBox(height: 12),
@@ -2266,7 +2448,9 @@ class _AddViewState extends ConsumerState<AddView> {
                     ? AppColors.primary.withValues(alpha: 0.1)
                     : Colors.transparent,
                 border: Border.all(
-                  color: isSelected ? AppColors.primary : Theme.of(context).colorScheme.outline.withValues(alpha: 0.5),
+                  color: isSelected
+                      ? AppColors.primary
+                      : Theme.of(context).colorScheme.outline.withValues(alpha: 0.5),
                   width: isSelected ? 2 : 1,
                 ),
                 borderRadius: BorderRadius.circular(25),
@@ -2283,7 +2467,9 @@ class _AddViewState extends ConsumerState<AddView> {
               child: Text(
                 type,
                 style: TextStyle(
-                  color: isSelected ? AppColors.primary : Theme.of(context).colorScheme.onSurface,
+                  color: isSelected
+                      ? AppColors.primary
+                      : Theme.of(context).colorScheme.onSurface,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 ),
               ),
@@ -2541,7 +2727,9 @@ class _AddViewState extends ConsumerState<AddView> {
           _rentController,
           _selectedPropertyType == 'Hostel'
               ? 'Monthly rent (per bed)'
-              : 'Monthly rent',
+              : _selectedPropertyType == 'Hotel'
+                  ? 'Rent (per night) PKR'
+                  : 'Monthly rent',
           'Required',
           TextInputType.number,
         ),
@@ -2551,8 +2739,10 @@ class _AddViewState extends ConsumerState<AddView> {
             Expanded(
               child: _buildTextField(
                 _advanceController,
-                'Advance amount',
-                'Required',
+                _selectedPropertyType == 'Hotel'
+                    ? 'Advance amount (optional)'
+                    : 'Advance amount',
+                _selectedPropertyType == 'Hotel' ? '' : 'Required',
                 TextInputType.number,
               ),
             ),
@@ -2866,8 +3056,8 @@ class _AddViewState extends ConsumerState<AddView> {
           errorStyle: const TextStyle(color: AppColors.primary),
         ),
         validator: (value) {
-          if (value == null || value.isEmpty) {
-            return errorText;
+          if (value == null || value.trim().isEmpty) {
+            return errorText.isEmpty ? null : errorText;
           }
           return null;
         },
@@ -3075,7 +3265,7 @@ class _AddViewState extends ConsumerState<AddView> {
               _gradientIcon(
                 icon,
                 color1: AppColors.primary,
-                color2: Colors.red.shade700,
+                color2: AppColors.primary,
               ),
               const SizedBox(width: 10),
               Text(
@@ -3199,26 +3389,11 @@ class _AddViewState extends ConsumerState<AddView> {
 
   // Save button - same style as other buttons in project (solid red)
   Widget _buildSaveButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 56,
-      child: ElevatedButton(
-        onPressed: _isSaving ? null : _handleSave,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(32),
-          ),
-          elevation: 4,
-        ),
-        child: _isSaving
-            ? const LogoLoader(size: 28)
-            : Text(
-                _isEditMode ? 'Save Changes' : 'Save',
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-      ),
+    return AppPrimaryButton(
+      label: _isEditMode ? 'Save Changes' : 'Save',
+      onPressed: _isSaving ? null : _handleSave,
+      isLoading: _isSaving,
+      loader: const LogoLoader(size: 22),
     );
   }
 }

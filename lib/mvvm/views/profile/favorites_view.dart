@@ -26,13 +26,11 @@ class _FavoritesViewState extends ConsumerState<FavoritesView> {
   String? _selectedType;
   final List<String> _types = const [
     'Hostel',
+    'Hotel',
     'House',
     'Flat',
     'Shop',
-    'Marquee',
-    'Farm House',
     'Office',
-    'Guest House',
   ];
 
   Future<void> _load() async {
@@ -86,7 +84,7 @@ class _FavoritesViewState extends ConsumerState<FavoritesView> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Removed from favorites'),
-        backgroundColor: Colors.red,
+        backgroundColor: AppColors.primary,
         behavior: SnackBarBehavior.floating,
         duration: Duration(seconds: 2),
       ),
@@ -219,7 +217,8 @@ class _FavoritesViewState extends ConsumerState<FavoritesView> {
                                           child: ChoiceChip(
                                             label: Text(t),
                                             selected: _selectedType == t,
-                                            selectedColor: Colors.red,
+                                            selectedColor:
+                                                AppColors.primary,
                                             labelStyle: TextStyle(
                                               color: _selectedType == t
                                                   ? Colors.white

@@ -5,6 +5,7 @@ import 'package:propertyrent/core/app_color/app_colors.dart';
 import 'package:propertyrent/core/constants/app_images.dart';
 import 'package:propertyrent/core/widgets/logo_loader.dart';
 import 'package:propertyrent/core/animations/fade_in_slide.dart';
+import 'package:propertyrent/core/widgets/app_primary_button.dart';
 import 'package:propertyrent/mvvm/viewmodels/auth_viewmodel.dart';
 import 'package:propertyrent/mvvm/views/auth/signup_view.dart';
 import 'package:propertyrent/mvvm/views/auth/forgot_password_view.dart';
@@ -48,7 +49,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(e.toString().replaceFirst('Exception: ', '')),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.primary,
         ),
       );
     } finally {
@@ -91,7 +92,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Login failed: ${e.toString()}'),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.primary,
           duration: const Duration(seconds: 4),
         ),
       );
@@ -109,7 +110,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
 
   Widget _gradientIcon(
     IconData icon, {
-    Color color1 = Colors.red,
+    Color color1 = AppColors.primary,
     Color color2 = Colors.black,
     double size = 24,
   }) {
@@ -247,7 +248,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
                         hint: 'Enter Email',
                         icon: Icons.mail_outline,
                         iconColor1: AppColors.primary,
-                        iconColor2: Colors.red.shade800,
+                        iconColor2: AppColors.primary,
                         keyboardType: TextInputType.emailAddress,
                         validator: (value) =>
                             value?.isEmpty ?? true ? 'Email required' : null,
@@ -314,30 +315,11 @@ class _LoginViewState extends ConsumerState<LoginView> {
                     // Login Button
                     FadeInSlide(
                       delay: 0.5,
-                      child: SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: ElevatedButton(
-                          onPressed: _isEmailLoading ? null : () => _handleEmailLogin(context),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(32),
-                            ),
-                            elevation: 4,
-                            shadowColor: AppColors.primary.withValues(alpha: 0.4),
-                          ),
-                          child: _isEmailLoading
-                              ? const LogoLoader(size: 28)
-                              : const Text(
-                                  'Login',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                        ),
+                      child: AppPrimaryButton(
+                        label: 'Login',
+                        onPressed: _isEmailLoading ? null : () => _handleEmailLogin(context),
+                        isLoading: _isEmailLoading,
+                        loader: const LogoLoader(size: 22),
                       ),
                     ),
                     const SizedBox(height: 28),

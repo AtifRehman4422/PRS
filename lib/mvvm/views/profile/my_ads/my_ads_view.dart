@@ -40,7 +40,7 @@ class MyAdsView extends StatelessWidget {
                     labelPadding: EdgeInsets.symmetric(horizontal: 16),
                     tabs: [
                       Tab(child: Text('Active', style: TextStyle(color: Colors.green, fontWeight: FontWeight.w700))),
-                      Tab(child: Text('Inactive', style: TextStyle(color: Colors.red, fontWeight: FontWeight.w700))),
+                      Tab(child: Text('Inactive', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700))),
                     ],
                   ),
                 ),

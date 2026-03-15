@@ -26,13 +26,11 @@ class _InactiveAdsPageState extends ConsumerState<InactiveAdsPage> {
   String? _selectedType;
   final List<String> _types = const [
     'Hostel',
+    'Hotel',
     'House',
     'Flat',
     'Shop',
-    'Marquee',
-    'Farm House',
     'Office',
-    'Guest House',
   ];
 
   Future<void> _load() async {
@@ -88,7 +86,7 @@ class _InactiveAdsPageState extends ConsumerState<InactiveAdsPage> {
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: const Text('Delete', style: TextStyle(color: AppColors.primary)),
           ),
         ],
       ),
@@ -111,7 +109,7 @@ class _InactiveAdsPageState extends ConsumerState<InactiveAdsPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(result.message ?? 'Failed to delete'),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.primary,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -146,7 +144,7 @@ class _InactiveAdsPageState extends ConsumerState<InactiveAdsPage> {
                             child: ChoiceChip(
                               label: Text(t),
                               selected: _selectedType == t,
-                              selectedColor: Colors.red,
+                              selectedColor: AppColors.primary,
                               labelStyle: TextStyle(
                                 color: _selectedType == t ? Colors.white : colorScheme.onSurface,
                                 fontWeight: FontWeight.w600,
@@ -169,7 +167,7 @@ class _InactiveAdsPageState extends ConsumerState<InactiveAdsPage> {
             const SizedBox(height: 8),
             Expanded(
               child: _loading
-                  ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
                   : !_hasToken
                       ? Center(
                           child: Text(

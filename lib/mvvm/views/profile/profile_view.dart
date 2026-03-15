@@ -11,6 +11,8 @@ import 'package:propertyrent/mvvm/views/profile/my_profile_view.dart';
 import 'package:propertyrent/mvvm/views/profile/favorites_view.dart';
 import 'package:propertyrent/mvvm/views/profile/my_ads/my_ads_view.dart';
 import 'package:propertyrent/mvvm/views/auth/login_view.dart';
+import 'package:propertyrent/core/widgets/app_primary_button.dart';
+import 'package:propertyrent/core/widgets/logo_loader.dart';
 
 enum _ContactType { call, email, whatsapp }
 
@@ -18,9 +20,14 @@ const String _kContactPhone = '03435020077';
 const String _kContactEmail = 'propertyrent48@gmail.com';
 const String _kWhatsAppNumber = '923435020077'; // 92 + 3435020077
 
-class ProfileView extends ConsumerWidget {
+class ProfileView extends ConsumerStatefulWidget {
   const ProfileView({super.key});
 
+  @override
+  ConsumerState<ProfileView> createState() => _ProfileViewState();
+}
+
+class _ProfileViewState extends ConsumerState<ProfileView> {
   void _navigateToPage(BuildContext context, Widget page) {
     Navigator.push(
       context,
@@ -452,7 +459,7 @@ class ProfileView extends ConsumerWidget {
 
   Widget _gradientIcon(
     IconData icon, {
-    Color color1 = Colors.red,
+    Color color1 = AppColors.primary,
     Color color2 = Colors.black,
     double size = 24,
   }) {
@@ -538,7 +545,7 @@ class ProfileView extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final authState = ref.watch(authStateProvider);
     final user = authState.valueOrNull;
@@ -580,7 +587,7 @@ class ProfileView extends ConsumerWidget {
                           title: 'My Ads',
                           subtitle: 'Manage your properties',
                           color1: AppColors.primary,
-                          color2: AppColors.primary.withValues(alpha: 0.8),
+                          color2: AppColors.primary,
                           onTap: () => _navigateToPage(context, const MyAdsView()),
                         ),
                       ),
@@ -593,8 +600,8 @@ class ProfileView extends ConsumerWidget {
                         icon: Icons.favorite_border,
                         title: 'Favorites',
                         subtitle: 'Your saved properties',
-                        color1: Colors.red,
-                        color2: Colors.red.shade800,
+                        color1: AppColors.primary,
+                        color2: AppColors.primary,
                         onTap: () => _navigateToPage(context, const FavoritesView()),
                       ),
                     ),
@@ -633,7 +640,7 @@ class ProfileView extends ConsumerWidget {
                         title: 'Invite Friend',
                         subtitle: 'Share app with friends',
                         color1: AppColors.primary,
-                        color2: Colors.red.shade800,
+                        color2: AppColors.primary,
                         onTap: () => _showInviteSheet(context),
                       ),
                     ),

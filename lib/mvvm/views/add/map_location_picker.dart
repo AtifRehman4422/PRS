@@ -5,6 +5,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:propertyrent/core/app_color/app_colors.dart';
 import 'package:propertyrent/data/datasource/place_autocomplete_api.dart';
+import 'package:propertyrent/core/widgets/app_primary_button.dart';
 
 /// Fallback when Place Autocomplete returns no results (e.g. PWD, sector names).
 class _GeocodeSuggestion {
@@ -541,18 +542,11 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
           // Save button
           Padding(
             padding: const EdgeInsets.all(16),
-            child: SizedBox(
-              width: double.infinity,
+            child: AppPrimaryButton(
+              label: 'Save',
+              onPressed: _onSave,
               height: 52,
-              child: FilledButton(
-                onPressed: _onSave,
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: const Text('Save', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              ),
+              borderRadius: 12,
             ),
           ),
         ],

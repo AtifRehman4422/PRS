@@ -40,56 +40,56 @@ class _BottomNavState extends State<BottomNav> {
     return Scaffold(
       body: _pages[_page],
       bottomNavigationBar: CurvedNavigationBar(
-        index: _page,
-        height: 70,
-        backgroundColor: Colors.transparent,
-        color: AppColors.primary,
-        buttonBackgroundColor: surfaceColor,
-        animationDuration: const Duration(milliseconds: 300),
-        items: [
-          CurvedNavigationBarItem(
-            child: Icon(
-              Icons.home,
-              color: _page == 0 ? AppColors.primary : surfaceColor,
-              size: 28,
+          index: _page,
+          height: 70,
+          backgroundColor: AppColors.primary,
+          color: AppColors.primary,
+          buttonBackgroundColor: surfaceColor,
+          animationDuration: const Duration(milliseconds: 300),
+          items: [
+            CurvedNavigationBarItem(
+              child: Icon(
+                Icons.home,
+                color: _page == 0 ? AppColors.primary : surfaceColor,
+                size: 28,
+              ),
+              label: 'Home',
+              labelStyle: TextStyle(
+                color: _page == 0 ? Colors.white : surfaceColor,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-            label: 'Home',
-            labelStyle: TextStyle(
-              color: _page == 0 ? AppColors.primary : surfaceColor,
-              fontWeight: FontWeight.bold,
+            CurvedNavigationBarItem(
+              child: Icon(
+                Icons.add,
+                color: _page == 1 ? AppColors.primary : surfaceColor,
+                size: 28,
+              ),
+              label: 'Add',
+              labelStyle: TextStyle(
+                color: _page == 1 ? Colors.white : surfaceColor,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ),
-          CurvedNavigationBarItem(
-            child: Icon(
-              Icons.add,
-              color: _page == 1 ? AppColors.primary : surfaceColor,
-              size: 28,
+            CurvedNavigationBarItem(
+              child: Icon(
+                Icons.person,
+                color: _page == 2 ? AppColors.primary : surfaceColor,
+                size: 28,
+              ),
+              label: 'Profile',
+              labelStyle: TextStyle(
+                color: _page == 2 ? Colors.white : surfaceColor,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-            label: 'Add',
-            labelStyle: TextStyle(
-              color: _page == 1 ? AppColors.primary : surfaceColor,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          CurvedNavigationBarItem(
-            child: Icon(
-              Icons.person,
-              color: _page == 2 ? AppColors.primary : surfaceColor,
-              size: 28,
-            ),
-            label: 'Profile',
-            labelStyle: TextStyle(
-              color: _page == 2 ? AppColors.primary : surfaceColor,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-        onTap: (index) {
-          setState(() {
-            _page = index;
-          });
-        },
-      ),
+          ],
+          onTap: (index) {
+            setState(() {
+              _page = index;
+            });
+          },
+        ),
     );
   }
 }

@@ -5,6 +5,7 @@ import 'package:propertyrent/mvvm/views/auth/login_view.dart';
 import 'package:propertyrent/mvvm/views/auth/reset_password_view.dart';
 import 'package:propertyrent/core/animations/fade_in_slide.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:propertyrent/core/widgets/app_primary_button.dart';
 import 'package:propertyrent/core/widgets/logo_loader.dart';
 import 'package:propertyrent/mvvm/viewmodels/auth_viewmodel.dart';
 
@@ -368,37 +369,12 @@ class _ForgotPasswordViewState extends ConsumerState<ForgotPasswordView> {
                     // Send Email Button
                     FadeInSlide(
                       delay: 0.4,
-                      child: SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: ElevatedButton(
-                          onPressed: _isSending ? null : _sendResetLink,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(32),
-                            ),
-                            elevation: 4,
-                          shadowColor: AppColors.primary.withValues(alpha: 0.4),
-                          ),
-                          child: _isSending
-                              ? const LogoLoader(size: 28)
-                              : const Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(Icons.send, size: 20),
-                                    SizedBox(width: 10),
-                                    Text(
-                                      'Send Email',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                        ),
+                      child: AppPrimaryButton(
+                        label: 'Send Email',
+                        icon: Icons.send,
+                        onPressed: _isSending ? null : _sendResetLink,
+                        isLoading: _isSending,
+                        loader: const LogoLoader(size: 22),
                       ),
                     ),
                     const SizedBox(height: 28),

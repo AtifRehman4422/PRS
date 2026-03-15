@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:propertyrent/core/app_color/app_colors.dart';
+import 'package:propertyrent/core/widgets/app_primary_button.dart';
 import 'package:propertyrent/core/widgets/logo_loader.dart';
 
 /// Legacy phone OTP screen. Phone auth was removed; use email signup or Google login.
@@ -119,28 +120,13 @@ class _OtpVerifyScreenState extends ConsumerState<OtpVerifyScreen> {
                   },
                 ),
                 const SizedBox(height: 32),
-                SizedBox(
+                AppPrimaryButton(
+                  label: 'Verify OTP',
+                  onPressed: _isVerifying ? null : _verifyOtp,
+                  isLoading: _isVerifying,
+                  loader: const LogoLoader(size: 22),
                   height: 56,
-                  child: ElevatedButton(
-                    onPressed: _isVerifying ? null : _verifyOtp,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(28),
-                      ),
-                      elevation: 4,
-                    ),
-                    child: _isVerifying
-                        ? const LogoLoader(size: 28)
-                        : const Text(
-                            'Verify OTP',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                  ),
+                  borderRadius: 28,
                 ),
               ],
             ),

@@ -7,8 +7,10 @@ import 'package:propertyrent/data/datasource/listing_api.dart';
 import 'package:propertyrent/data/models/listing_model.dart';
 import 'package:propertyrent/mvvm/viewmodels/auth_viewmodel.dart';
 import 'package:propertyrent/mvvm/views/home/widgets/property_card.dart';
+import 'package:propertyrent/mvvm/views/add/nearby_listings_map_view.dart';
 import 'package:propertyrent/mvvm/views/home/listing_feature_chips.dart';
 import 'package:propertyrent/core/animations/fade_in_slide.dart';
+import 'package:propertyrent/core/widgets/app_primary_button.dart';
 import 'package:propertyrent/mvvm/views/home/property_detail_view.dart';
 import 'package:propertyrent/mvvm/views/home/search_city_view.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -37,6 +39,7 @@ class _CategoryListingViewState extends ConsumerState<CategoryListingView> {
   final TextEditingController _maxPriceController = TextEditingController();
   String _selectedCityName = '';
   String _selectedCityForApi = '';
+  String _selectedHostelTypeFilter = 'Any';
 
   static String _propertyTypeFromCategory(String name) {
     if (name == 'Farmhouse') return 'Farm House';
@@ -104,6 +107,16 @@ class _CategoryListingViewState extends ConsumerState<CategoryListingView> {
       final r = l.rent ?? 0;
       if (_priceMin != null && r < _priceMin!) return false;
       if (_priceMax != null && r > _priceMax!) return false;
+      // Hostel type filter (only when viewing Hostel category)
+      if (_propertyTypeFromCategory(widget.categoryName) == 'Hostel' &&
+          _selectedHostelTypeFilter != 'Any') {
+        final td = l.typeDetails;
+        final hostelType = (td?['hostel_type'] ?? '').toString();
+        if (hostelType.isEmpty) return false;
+        if (!hostelType.toLowerCase().contains(_selectedHostelTypeFilter.toLowerCase())) {
+          return false;
+        }
+      }
       return true;
     }).toList();
     switch (_sortBy) {
@@ -144,9 +157,9 @@ class _CategoryListingViewState extends ConsumerState<CategoryListingView> {
     });
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
+              SnackBar(
         content: Text(isFav ? 'Removed from favorites' : 'Added to favorites'),
-        backgroundColor: isFav ? Colors.red : Colors.green,
+        backgroundColor: isFav ? AppColors.primary : Colors.green,
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 2),
       ),
@@ -331,7 +344,42 @@ class _CategoryListingViewState extends ConsumerState<CategoryListingView> {
             isPrimary: true,
           ),
           const SizedBox(width: 10),
-          _buildFilterButton(context, 'Map', Icons.map_outlined, () {}, isPrimary: true),
+          if (_propertyTypeFromCategory(widget.categoryName) == 'Hostel')
+            _buildFilterButton(
+              context,
+              _selectedHostelTypeFilter == 'Any'
+                  ? 'Hostel Type'
+                  : 'Hostel: $_selectedHostelTypeFilter',
+              Icons.wc,
+              () => _showHostelTypeBottomSheet(context),
+              isPrimary: false,
+              pillGradient: const LinearGradient(
+                colors: [AppColors.primary, AppColors.primary],
+              ),
+            ),
+          if (_propertyTypeFromCategory(widget.categoryName) == 'Hostel')
+            const SizedBox(width: 10),
+          _buildFilterButton(
+            context,
+            'Map',
+            Icons.map_outlined,
+            () {
+              final propertyType = _propertyTypeFromCategory(widget.categoryName);
+              final city = _selectedCityForApi.isNotEmpty ? _selectedCityForApi : null;
+              NearbyListingsMapView.open(
+                context,
+                city: city,
+                propertyType: propertyType,
+              );
+            },
+            isPrimary: true,
+            pillGradient: const LinearGradient(
+              colors: [
+                AppColors.primary,
+                AppColors.primary,
+              ],
+            ),
+          ),
           const SizedBox(width: 10),
           _buildFilterButton(
             context,
@@ -339,6 +387,12 @@ class _CategoryListingViewState extends ConsumerState<CategoryListingView> {
             Icons.tune,
             () => _showPriceRangeBottomSheet(context),
             isPrimary: true,
+            pillGradient: const LinearGradient(
+              colors: [
+                AppColors.primary,
+                AppColors.primary,
+              ],
+            ),
           ),
         ],
       ),
@@ -351,6 +405,7 @@ class _CategoryListingViewState extends ConsumerState<CategoryListingView> {
     IconData icon,
     VoidCallback onTap, {
     bool isPrimary = false,
+    LinearGradient? pillGradient,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
     return InkWell(
@@ -359,15 +414,20 @@ class _CategoryListingViewState extends ConsumerState<CategoryListingView> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: isPrimary ? AppColors.primary : colorScheme.surface,
+          gradient: pillGradient,
+          color: pillGradient == null
+              ? (isPrimary ? AppColors.primary : colorScheme.surface)
+              : null,
           borderRadius: BorderRadius.circular(25),
-          border: isPrimary ? null : Border.all(color: colorScheme.outline.withValues(alpha: 0.3)),
+          border: isPrimary || pillGradient != null
+              ? null
+              : Border.all(color: colorScheme.outline.withValues(alpha: 0.3)),
           boxShadow: [
             if (!isPrimary)
               BoxShadow(
-            color: Colors.grey.withValues(alpha: 0.1),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
+                color: Colors.grey.withValues(alpha: 0.12),
+                blurRadius: 6,
+                offset: const Offset(0, 3),
               ),
           ],
         ),
@@ -375,14 +435,18 @@ class _CategoryListingViewState extends ConsumerState<CategoryListingView> {
           children: [
             Icon(
               icon,
-              color: isPrimary ? Colors.white : colorScheme.onSurface,
+              color: isPrimary || pillGradient != null
+                  ? Colors.white
+                  : colorScheme.onSurface,
               size: 18,
             ),
             const SizedBox(width: 8),
             Text(
               text,
               style: TextStyle(
-                color: isPrimary ? Colors.white : colorScheme.onSurface,
+                color: isPrimary || pillGradient != null
+                    ? Colors.white
+                    : colorScheme.onSurface,
                 fontWeight: FontWeight.w600,
                 fontSize: 14,
               ),
@@ -390,6 +454,182 @@ class _CategoryListingViewState extends ConsumerState<CategoryListingView> {
           ],
         ),
       ),
+    );
+  }
+
+  void _showHostelTypeBottomSheet(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        final options = ['Boys', 'Girls', 'Any'];
+        return Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                colorScheme.surface,
+                colorScheme.surfaceContainerHighest,
+              ],
+            ),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.18),
+                blurRadius: 18,
+                offset: const Offset(0, -6),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+          child: SafeArea(
+            top: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 44,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: colorScheme.outline.withValues(alpha: 0.35),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.wc,
+                        color: AppColors.primary,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Hostel Type',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Filter hostels by preference',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: colorScheme.onSurface.withValues(alpha: 0.6),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: options.map((type) {
+                    IconData icon;
+                    if (type == 'Boys') {
+                      icon = Icons.male;
+                    } else if (type == 'Girls') {
+                      icon = Icons.female;
+                    } else {
+                      icon = Icons.people;
+                    }
+                    final selected = _selectedHostelTypeFilter == type;
+                    return GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _selectedHostelTypeFilter = type;
+                          _updateDisplayList();
+                        });
+                        Navigator.of(context).pop();
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(22),
+                          gradient: selected
+                              ? const LinearGradient(
+                                  colors: [
+                                    AppColors.primary,
+                                    AppColors.primary,
+                                  ],
+                                )
+                              : null,
+                          color: selected
+                              ? null
+                              : colorScheme.surfaceContainerHighest,
+                          border: selected
+                              ? null
+                              : Border.all(
+                                  color: colorScheme.outline.withValues(alpha: 0.25),
+                                ),
+                          boxShadow: selected
+                              ? [
+                                  BoxShadow(
+                                    color: AppColors.primary.withValues(alpha: 0.28),
+                                    blurRadius: 14,
+                                    offset: const Offset(0, 6),
+                                  ),
+                                ]
+                              : [],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              icon,
+                              size: 18,
+                              color: selected ? Colors.white : AppColors.primary,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              type,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: selected
+                                    ? Colors.white
+                                    : colorScheme.onSurface,
+                              ),
+                            ),
+                            if (selected) ...[
+                              const SizedBox(width: 6),
+                              const Icon(
+                                Icons.check_rounded,
+                                size: 16,
+                                color: Colors.white,
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -633,7 +873,8 @@ class _CategoryListingViewState extends ConsumerState<CategoryListingView> {
                       flex: 2,
                       child: SizedBox(
                         height: 54,
-                        child: ElevatedButton(
+                        child: AppPrimaryButton(
+                          label: 'Apply Filter',
                           onPressed: () {
                             final minStr = _minPriceController.text.trim();
                             final maxStr = _maxPriceController.text.trim();
@@ -657,22 +898,8 @@ class _CategoryListingViewState extends ConsumerState<CategoryListingView> {
                               Navigator.pop(context);
                             }
                           },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(27),
-                            ),
-                            elevation: 4,
-                            shadowColor: AppColors.primary.withValues(alpha: 0.4),
-                          ),
-                          child: const Text(
-                            'Apply Filter',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
+                          height: 54,
+                          borderRadius: 27,
                         ),
                       ),
                     ),

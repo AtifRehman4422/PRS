@@ -53,7 +53,7 @@ class PropertyCard extends StatefulWidget {
     this.onFavoriteTap,
     this.isOwner = false,
     this.statusText = 'Active',
-    this.statusColor = Colors.red,
+    this.statusColor = AppColors.primary,
     this.showFeaturesRow = true,
     this.onCallTap,
     this.onWhatsAppTap,
@@ -117,6 +117,13 @@ class _PropertyCardState extends State<PropertyCard> {
     if (diff.inDays < 365) return '${(diff.inDays / 30).floor()} months';
     if (diff.inDays < 730) return '1 year';
     return '${(diff.inDays / 365).floor()} years';
+  }
+
+  Widget _priceText(String text, TextStyle style) {
+    return Text(
+      text,
+      style: style.copyWith(color: AppColors.primary),
+    );
   }
 
   @override
@@ -586,22 +593,20 @@ class _PropertyCardState extends State<PropertyCard> {
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
-                              Text(
+                              _priceText(
                                 widget.price,
-                                style: TextStyle(
+                                TextStyle(
                                   fontSize: widget.compact ? 18 : 20,
                                   fontWeight: FontWeight.w800,
-                                  color: AppColors.primary,
                                 ),
                               ),
-                              const Padding(
-                                padding: EdgeInsets.only(bottom: 4, left: 4),
-                                child: Text(
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 4, left: 4),
+                                child: _priceText(
                                   'PKR',
-                                  style: TextStyle(
+                                  const TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
-                                    color: AppColors.primary,
                                   ),
                                 ),
                               ),
@@ -617,7 +622,7 @@ class _PropertyCardState extends State<PropertyCard> {
                                 _buildOwnerActionButton(
                                   icon: Icons.delete_outline,
                                   label: 'Delete',
-                                  color: Colors.red,
+                                  color: AppColors.primary,
                                   onTap: widget.onDeleteTap ?? () {},
                                 ),
                                 const SizedBox(width: 12),

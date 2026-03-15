@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:propertyrent/core/app_color/app_colors.dart';
 import 'package:propertyrent/core/constants/app_images.dart';
 
 /// Custom loader: spinning ring (gumta hua) with logo image in the center.
@@ -51,7 +52,7 @@ class _LogoLoaderState extends State<LogoLoader>
               size: Size(widget.size, widget.size),
               painter: _LoaderRingPainter(
                 strokeWidth: widget.strokeWidth,
-                color: Theme.of(context).colorScheme.primary,
+                color: AppColors.primary,
               ),
             ),
           ),

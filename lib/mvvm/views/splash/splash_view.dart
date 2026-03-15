@@ -111,13 +111,7 @@ class _SplashViewState extends State<SplashView>
         children: [
           // Background - Premium Gradient
           Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [AppColors.primary, AppColors.primaryDark],
-              ),
-            ),
+            color: AppColors.primary,
           ),
 
           // Video Layer
